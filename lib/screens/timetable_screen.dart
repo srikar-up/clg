@@ -277,173 +277,224 @@ class _DayScheduleViewState extends State<_DayScheduleView> {
     final status = isToday ? provider.getNowAndNext() : null;
     final isLunch = isToday ? provider.isLunchGap() : false;
 
-    return Scrollbar(
-      controller: _scrollController,
-      thumbVisibility: true,
-      interactive: true,
-      radius: const Radius.circular(8),
-      child: ListView(
-        controller: _scrollController,
-        primary: false,
-        padding: const EdgeInsets.all(16),
-        children: [
-        // --- DASHBOARD SECTION (Only show on Today's Tab) ---
-        if (isToday) ...[
-          // 1. Lunch Alert
-          if (isLunch)
-            Container(
-              padding: const EdgeInsets.all(16),
-              margin: const EdgeInsets.only(bottom: 20),
-              decoration: BoxDecoration(
-                color: Colors.green.shade50,
-                borderRadius: BorderRadius.circular(16),
-                border: Border.all(color: Colors.green.shade200),
-              ),
-              child: Row(
-                children: [
-                  const Icon(Icons.restaurant, color: Colors.green),
-                  const SizedBox(width: 12),
-                  Expanded(
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: const [
-                        Text("Lunch Break!", style: TextStyle(fontWeight: FontWeight.bold, color: Colors.green)),
-                        Text("12 PM - 3 PM Gap detected.", style: TextStyle(color: Colors.black87, fontSize: 12)),
-                      ],
-                    ),
-                  ),
-                ],
-              ),
-            ),
+    return Container(
+      color: const Color(0xFFFBF8FF),
+      child: isToday
+        ? Column(
+            children: [
+              // Fixed Now & Upcoming section
+              Container(
+                color: const Color(0xFFFBF8FF),
+                padding: const EdgeInsets.all(16),
+                child: LayoutBuilder(builder: (ctx, constraints) {
+                  final now = TimeOfDay.now();
+                  final nowMin = now.hour * 60 + now.minute;
+                  final todayItems = items;
+                  final upcoming = todayItems.where((i) => (i.startHour * 60 + i.startMinute) > nowMin).toList();
 
-          // 2. Now & Upcoming (show all upcoming classes)
-          LayoutBuilder(builder: (ctx, constraints) {
-            final now = TimeOfDay.now();
-            final nowMin = now.hour * 60 + now.minute;
-            final todayItems = items;
-            final upcoming = todayItems.where((i) => (i.startHour * 60 + i.startMinute) > nowMin).toList();
-
-            return Row(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                // NOW card (left) — increased size
-                ConstrainedBox(
-                  constraints: BoxConstraints(maxWidth: constraints.maxWidth * 0.48),
-                  child: AnimatedSwitcher(
-                    duration: const Duration(milliseconds: 300),
-                    child: _StatusCard(key: ValueKey(status?['current']?.id ?? 'now'), title: 'NOW', item: status?['current'], isActive: true),
-                  ),
-                ),
-                const SizedBox(width: 12),
-
-                // Upcoming list (right) — in rectangle box
-                Expanded(
-                  child: Container(
-                    height: 120,
-                    decoration: BoxDecoration(
-                      color: Colors.white,
-                      borderRadius: BorderRadius.circular(12),
-                      border: Border.all(color: Colors.grey.shade200),
-                      boxShadow: [BoxShadow(color: Colors.black.withOpacity(0.03), blurRadius: 10, offset: const Offset(0, 2))],
-                    ),
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        Padding(
-                          padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
-                          child: Text('Upcoming', style: TextStyle(fontSize: 12, fontWeight: FontWeight.bold, color: Colors.grey.shade800)),
+                  return Row(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      // NOW card (left)
+                      ConstrainedBox(
+                        constraints: BoxConstraints(maxWidth: constraints.maxWidth * 0.48),
+                        child: AnimatedSwitcher(
+                          duration: const Duration(milliseconds: 300),
+                          child: _StatusCard(key: ValueKey(status?['current']?.id ?? 'now'), title: 'NOW', item: status?['current'], isActive: true),
                         ),
-                        Expanded(
-                          child: ClipRRect(
-                            borderRadius: const BorderRadius.vertical(bottom: Radius.circular(12)),
-                            child: Container(
-                              color: Colors.transparent,
-                              child: upcoming.isEmpty
-                                  ? Padding(
-                                      padding: const EdgeInsets.all(8.0),
-                                      child: Text('No upcoming classes', style: TextStyle(color: Colors.grey.shade600, fontSize: 12)),
-                                        )
-                                  : SingleChildScrollView(
-                                      scrollDirection: Axis.horizontal,
-                                      child: Row(
-                                        children: [
-                                          for (var item in upcoming)
-                                            Padding(
-                                              padding: const EdgeInsets.symmetric(horizontal: 6),
-                                              child: Dismissible(
-                                                key: ValueKey('upcoming-${item.id}'),
-                                                direction: DismissDirection.up,
-                                                background: Container(
-                                                  decoration: BoxDecoration(color: Colors.red.shade600, borderRadius: BorderRadius.circular(12)),
-                                                  alignment: Alignment.center,
-                                                  child: const Icon(Icons.delete, color: Colors.white),
-                                                ),
-                                                confirmDismiss: (_) async {
-                                                  final res = await showDialog<bool>(context: context, builder: (ctx) => AlertDialog(
-                                                    title: const Text('Delete'),
-                                                    content: const Text('Remove this class?'),
-                                                    actions: [
-                                                      TextButton(onPressed: () => Navigator.pop(ctx, false), child: const Text('Cancel')),
-                                                      FilledButton(onPressed: () => Navigator.pop(ctx, true), child: const Text('Delete')),
-                                                    ],
-                                                  ));
-                                                  return res ?? false;
-                                                },
-                                                onDismissed: (_) {
-                                                  provider.deleteItem(item);
-                                                  ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('Deleted')));
-                                                },
-                                                child: _UpcomingTile(item: item, provider: provider),
-                                              ),
+                      ),
+                      const SizedBox(width: 12),
+
+                      // Upcoming list (right)
+                      Expanded(
+                        child: Container(
+                          height: 120,
+                          decoration: BoxDecoration(
+                            color: Colors.white,
+                            borderRadius: BorderRadius.circular(12),
+                            border: Border.all(color: Colors.grey.shade200),
+                            boxShadow: [BoxShadow(color: Colors.black.withOpacity(0.03), blurRadius: 10, offset: const Offset(0, 2))],
+                          ),
+                          child: Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
+                              Padding(
+                                padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+                                child: Text('Upcoming', style: TextStyle(fontSize: 12, fontWeight: FontWeight.bold, color: Colors.grey.shade800)),
+                              ),
+                              Expanded(
+                                child: ClipRRect(
+                                  borderRadius: const BorderRadius.vertical(bottom: Radius.circular(12)),
+                                  child: Container(
+                                    color: Colors.transparent,
+                                    child: upcoming.isEmpty
+                                        ? Padding(
+                                            padding: const EdgeInsets.all(8.0),
+                                            child: Text('No upcoming classes', style: TextStyle(color: Colors.grey.shade600, fontSize: 12)),
+                                          )
+                                        : SingleChildScrollView(
+                                            scrollDirection: Axis.horizontal,
+                                            child: Row(
+                                              children: [
+                                                for (var item in upcoming)
+                                                  Padding(
+                                                    padding: const EdgeInsets.symmetric(horizontal: 6),
+                                                    child: Dismissible(
+                                                      key: ValueKey('upcoming-${item.id}'),
+                                                      direction: DismissDirection.up,
+                                                      background: Container(
+                                                        decoration: BoxDecoration(color: Colors.red.shade600, borderRadius: BorderRadius.circular(12)),
+                                                        alignment: Alignment.center,
+                                                        child: const Icon(Icons.delete, color: Colors.white),
+                                                      ),
+                                                      confirmDismiss: (_) async {
+                                                        final res = await showDialog<bool>(context: context, builder: (ctx) => AlertDialog(
+                                                          title: const Text('Delete'),
+                                                          content: const Text('Remove this class?'),
+                                                          actions: [
+                                                            TextButton(onPressed: () => Navigator.pop(ctx, false), child: const Text('Cancel')),
+                                                            FilledButton(onPressed: () => Navigator.pop(ctx, true), child: const Text('Delete')),
+                                                          ],
+                                                        ));
+                                                        return res ?? false;
+                                                      },
+                                                      onDismissed: (_) {
+                                                        provider.deleteItem(item);
+                                                        ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('Deleted')));
+                                                      },
+                                                      child: _UpcomingTile(item: item, provider: provider),
+                                                    ),
+                                                  ),
+                                              ],
                                             ),
-                                        ],
-                                      ),
-                                    ),
-                            ),
+                                          ),
+                                  ),
+                                ),
+                              ),
+                            ],
                           ),
                         ),
-                      ],
-                    ),
+                      ),
+                    ],
+                  );
+                }),
+              ),
+
+              // Fixed Today's Schedule header
+              Padding(
+                padding: const EdgeInsets.symmetric(horizontal: 16),
+                child: Text(
+                  "Today's Schedule", 
+                  style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold, color: Colors.grey.shade800)
+                ),
+              ),
+              const SizedBox(height: 12),
+
+              // Scrollable schedule content
+              Expanded(
+                child: Scrollbar(
+                  controller: _scrollController,
+                  thumbVisibility: true,
+                  interactive: true,
+                  radius: const Radius.circular(8),
+                  child: ListView(
+                    controller: _scrollController,
+                    primary: false,
+                    padding: const EdgeInsets.symmetric(horizontal: 16),
+                    children: [
+                      // Lunch Alert
+                      if (isLunch)
+                        Container(
+                          padding: const EdgeInsets.all(16),
+                          margin: const EdgeInsets.only(bottom: 20),
+                          decoration: BoxDecoration(
+                            color: Colors.green.shade50,
+                            borderRadius: BorderRadius.circular(16),
+                            border: Border.all(color: Colors.green.shade200),
+                          ),
+                          child: Row(
+                            children: [
+                              const Icon(Icons.restaurant, color: Colors.green),
+                              const SizedBox(width: 12),
+                              Expanded(
+                                child: Column(
+                                  crossAxisAlignment: CrossAxisAlignment.start,
+                                  children: const [
+                                    Text("Lunch Break!", style: TextStyle(fontWeight: FontWeight.bold, color: Colors.green)),
+                                    Text("12 PM - 3 PM Gap detected.", style: TextStyle(color: Colors.black87, fontSize: 12)),
+                                  ],
+                                ),
+                              ),
+                            ],
+                          ),
+                        ),
+
+                      // --- TIMETABLE LIST SECTION ---
+                      if (items.isEmpty) 
+                         Padding(
+                           padding: const EdgeInsets.only(top: 40),
+                           child: Center(
+                             child: Column(
+                               children: [
+                                 Icon(Icons.event_busy, size: 48, color: Colors.grey.shade300),
+                                 const SizedBox(height: 10),
+                                 const Text("No classes scheduled.", style: TextStyle(color: Colors.grey)),
+                               ],
+                             ),
+                           ),
+                         )
+                      else
+                        for (var item in items) AnimatedSwitcher(
+                              duration: const Duration(milliseconds: 350),
+                              transitionBuilder: (child, anim) => FadeTransition(opacity: anim, child: SizeTransition(sizeFactor: anim, axisAlignment: 0.0, child: child)),
+                              child: _ClassTile(key: ValueKey(item.id), item: item, provider: provider),
+                            ),
+                      
+                      // Extra padding at bottom for FAB
+                      const SizedBox(height: 80), 
+                    ],
                   ),
                 ),
-              ],
-            );
-          }),
-          
-          const SizedBox(height: 24),
-          Text(
-            "Today's Schedule", 
-            style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold, color: Colors.grey.shade800)
-          ),
-          const SizedBox(height: 10),
-        ],
-
-        // --- TIMETABLE LIST SECTION ---
-        if (items.isEmpty) 
-           Padding(
-             padding: const EdgeInsets.only(top: 40),
-             child: Center(
-               child: Column(
-                 children: [
-                   Icon(Icons.event_busy, size: 48, color: Colors.grey.shade300),
-                   const SizedBox(height: 10),
-                   const Text("No classes scheduled.", style: TextStyle(color: Colors.grey)),
-                 ],
-               ),
-             ),
-           )
-        else
-          for (var item in items) AnimatedSwitcher(
-                duration: const Duration(milliseconds: 350),
-                transitionBuilder: (child, anim) => FadeTransition(opacity: anim, child: SizeTransition(sizeFactor: anim, axisAlignment: 0.0, child: child)),
-                child: _ClassTile(key: ValueKey(item.id), item: item, provider: provider),
               ),
-          
-        // Extra padding at bottom for FAB
-        const SizedBox(height: 80), 
-      ],
-    ),
-    ); 
+            ],
+          )
+        : Scrollbar(
+            controller: _scrollController,
+            thumbVisibility: true,
+            interactive: true,
+            radius: const Radius.circular(8),
+            child: ListView(
+              controller: _scrollController,
+              primary: false,
+              padding: const EdgeInsets.all(16),
+              children: [
+                // --- TIMETABLE LIST SECTION ---
+                if (items.isEmpty) 
+                   Padding(
+                     padding: const EdgeInsets.only(top: 40),
+                     child: Center(
+                       child: Column(
+                         children: [
+                           Icon(Icons.event_busy, size: 48, color: Colors.grey.shade300),
+                           const SizedBox(height: 10),
+                           const Text("No classes scheduled.", style: TextStyle(color: Colors.grey)),
+                         ],
+                       ),
+                     ),
+                   )
+                else
+                  for (var item in items) AnimatedSwitcher(
+                        duration: const Duration(milliseconds: 350),
+                        transitionBuilder: (child, anim) => FadeTransition(opacity: anim, child: SizeTransition(sizeFactor: anim, axisAlignment: 0.0, child: child)),
+                        child: _ClassTile(key: ValueKey(item.id), item: item, provider: provider),
+                      ),
+                
+                // Extra padding at bottom for FAB
+                const SizedBox(height: 80), 
+              ],
+            ),
+          ),
+    );
   }
 }
 
@@ -469,40 +520,49 @@ class _StatusCard extends StatelessWidget {
         boxShadow: isActive ? [BoxShadow(color: bgColor.withOpacity(0.18), blurRadius: 10, offset: const Offset(0, 6))] : [BoxShadow(color: Colors.black.withOpacity(0.03), blurRadius: 6, offset: const Offset(0, 2))],
         border: isActive ? null : Border.all(color: Colors.grey.shade200),
       ),
-      child: Padding(
-        padding: const EdgeInsets.all(12),
-        child: Row(crossAxisAlignment: CrossAxisAlignment.center, children: [
-          Expanded(
-            child: Column(crossAxisAlignment: CrossAxisAlignment.start, mainAxisAlignment: MainAxisAlignment.center, children: [
-              Text(title, style: TextStyle(color: txtColor.withOpacity(0.95), fontSize: 12, fontWeight: FontWeight.bold, letterSpacing: 0.6)),
-              const SizedBox(height: 6),
-              AnimatedSwitcher(
-                duration: const Duration(milliseconds: 300),
-                child: item == null
-                    ? Text(isActive ? "Free Time" : "Nothing later", key: const ValueKey('empty'), style: TextStyle(color: txtColor, fontSize: 14, fontWeight: FontWeight.w600))
-                    : Column(
-                        key: ValueKey(item!.id),
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        children: [
-                          Text(
-                            item!.title,
-                            maxLines: 1,
-                            overflow: TextOverflow.ellipsis,
-                            style: TextStyle(color: txtColor, fontSize: 15, fontWeight: FontWeight.bold),
-                          ),
-                          const SizedBox(height: 4),
-                          Text(
-                            "${item!.location} • ${_fmt(item!.startHour, item!.startMinute)}",
-                            style: TextStyle(color: txtColor.withOpacity(0.9), fontSize: 12),
-                          ),
-                        ],
-                      ),
-              ),
-            ]),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Padding(
+            padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+            child: Text(title, style: TextStyle(color: txtColor.withOpacity(0.95), fontSize: 12, fontWeight: FontWeight.bold, letterSpacing: 0.6)),
           ),
-          if (isActive) const SizedBox(width: 8),
-          if (isActive) Icon(Icons.circle, size: 12, color: Colors.white.withOpacity(0.9)),
-        ]),
+          Expanded(
+            child: Padding(
+              padding: const EdgeInsets.symmetric(horizontal: 12),
+              child: Row(crossAxisAlignment: CrossAxisAlignment.center, children: [
+                Expanded(
+                  child: Column(crossAxisAlignment: CrossAxisAlignment.start, mainAxisAlignment: MainAxisAlignment.center, children: [
+                    AnimatedSwitcher(
+                      duration: const Duration(milliseconds: 300),
+                      child: item == null
+                          ? Text(isActive ? "Free Time" : "Nothing later", key: const ValueKey('empty'), style: TextStyle(color: txtColor, fontSize: 14, fontWeight: FontWeight.w600))
+                          : Column(
+                              key: ValueKey(item!.id),
+                              crossAxisAlignment: CrossAxisAlignment.start,
+                              children: [
+                                Text(
+                                  item!.title,
+                                  maxLines: 1,
+                                  overflow: TextOverflow.ellipsis,
+                                  style: TextStyle(color: txtColor, fontSize: 15, fontWeight: FontWeight.bold),
+                                ),
+                                const SizedBox(height: 4),
+                                Text(
+                                  "${item!.location} • ${_fmt(item!.startHour, item!.startMinute)}",
+                                  style: TextStyle(color: txtColor.withOpacity(0.9), fontSize: 12),
+                                ),
+                              ],
+                            ),
+                    ),
+                  ]),
+                ),
+                if (isActive) const SizedBox(width: 8),
+                if (isActive) Icon(Icons.circle, size: 12, color: Colors.white.withOpacity(0.9)),
+              ]),
+            ),
+          ),
+        ],
       ),
     );
   }
@@ -519,10 +579,8 @@ class _ClassTile extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final bool isExam = item.type == 'exam';
-    // Generate color deterministically based on title length if it's a class
-    final Color stripeColor = isExam 
-        ? Colors.red 
-        : Colors.primaries[item.title.length % Colors.primaries.length];
+    // All class tiles now have red stripe
+    final Color stripeColor = Colors.red;
 
     return Container(
       margin: const EdgeInsets.only(bottom: 12),

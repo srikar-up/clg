@@ -44,7 +44,7 @@ class StudentLifeOS extends StatelessWidget {
         debugShowCheckedModeBanner: false,
         theme: ThemeData(
           useMaterial3: true,
-          colorSchemeSeed: Colors.indigo,
+          colorSchemeSeed: Colors.red,
           scaffoldBackgroundColor: const Color(0xFFF5F5F7),
         ),
         home: const MainDashboard(),
@@ -75,6 +75,7 @@ class _MainDashboardState extends State<MainDashboard> {
     return Scaffold(
       body: _screens[_index],
       bottomNavigationBar: NavigationBar(
+        backgroundColor: Colors.white,
         selectedIndex: _index,
         onDestinationSelected: (i) => setState(() => _index = i),
         indicatorColor: Colors.red.shade600,
