@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:intl/intl.dart';
+import 'package:fl_chart/fl_chart.dart';
 
 import '../logic/life_provider.dart';
 import '../logic/expense_provider.dart';
@@ -19,7 +20,9 @@ const _orange = Color(0xFFF97316);
 const _blue = Color(0xFF3B82F6);
 
 class DashboardScreen extends StatelessWidget {
-  const DashboardScreen({super.key});
+  final VoidCallback? onNavigateToTimetable;
+
+  const DashboardScreen({super.key, this.onNavigateToTimetable});
 
   @override
   Widget build(BuildContext context) {
@@ -29,6 +32,48 @@ class DashboardScreen extends StatelessWidget {
     final sylProv = context.watch<SyllabusProvider>();
 
     final currencyFmt = NumberFormat.currency(locale: 'en_IN', symbol: '₹', decimalDigits: 0);
+
+    final now = DateTime.now();
+    // Syllabus Line Chart Data (Last 7 Days - Interpolated since completion dates aren't natively stored)
+    final totalProgressPercent = sylProv.subjects.isEmpty ? 0.0 : 
+      (sylProv.subjects.fold(0.0, (sum, s) => sum + s.masterProgress) / sylProv.subjects.length) * 100;
+    
+    List<FlSpot> syllabusSpots = [
+      FlSpot(0, (totalProgressPercent * 0.3).clamp(0, 100)),
+      FlSpot(1, (totalProgressPercent * 0.5).clamp(0, 100)),
+      FlSpot(2, (totalProgressPercent * 0.6).clamp(0, 100)),
+      FlSpot(3, (totalProgressPercent * 0.75).clamp(0, 100)),
+      FlSpot(4, (totalProgressPercent * 0.85).clamp(0, 100)),
+      FlSpot(5, (totalProgressPercent * 0.95).clamp(0, 100)),
+      FlSpot(6, totalProgressPercent),
+    ];
+    List<String> dayLabels = List.generate(7, (index) => DateFormat('d MMM').format(now.subtract(Duration(days: 6 - index))));
+
+    // Finance Bar Chart Data (Last 6 Months)
+    List<BarChartGroupData> expenseBarGroups = [];
+    List<String> monthLabels = [];
+    double maxBarValue = 0;
+    for (int i = 5; i >= 0; i--) {
+      final monthDate = DateTime(now.year, now.month - i, 1);
+      final nextMonthDate = DateTime(now.year, now.month - i + 1, 1);
+      
+      final monthExpenses = expProv.allExpenses.where((e) => e.date.isAfter(monthDate.subtract(const Duration(days: 1))) && e.date.isBefore(nextMonthDate)).toList();
+      
+      final inflow = monthExpenses.where((e) => e.title == 'Savings' || e.title == 'Debt Taken').fold(0.0, (sum, e) => sum + e.amount);
+      final outflow = monthExpenses.where((e) => e.title == 'Expense' || e.title == 'Investment' || e.title == 'Debt Repayment').fold(0.0, (sum, e) => sum + e.amount);
+      
+      if (inflow > maxBarValue) maxBarValue = inflow;
+      if (outflow > maxBarValue) maxBarValue = outflow;
+
+      expenseBarGroups.add(BarChartGroupData(
+        x: 5 - i,
+        barRods: [
+          BarChartRodData(toY: inflow, color: _green, width: 8, borderRadius: BorderRadius.circular(2)),
+          BarChartRodData(toY: outflow, color: _red600, width: 8, borderRadius: BorderRadius.circular(2)),
+        ],
+      ));
+      monthLabels.add(DateFormat('MMM').format(monthDate));
+    }
 
     return Scaffold(
       backgroundColor: _bgPrimary,
@@ -193,9 +238,67 @@ class DashboardScreen extends StatelessWidget {
                             Container(width: 1, height: 30, color: Colors.grey.shade200),
                             _buildStatColumn('Total Credits', '${sylProv.subjects.fold<int>(0, (prev, s) => prev + s.credits)}', Colors.grey.shade800),
                             Container(width: 1, height: 30, color: Colors.grey.shade200),
-                            _buildStatColumn('Current Sem', '${sylProv.activeSemesterName}', _purple),
+                            _buildStatColumn('Current Sem', sylProv.activeSemesterName, _purple),
                           ],
-                        )
+                        ),
+                        if (sylProv.subjects.isNotEmpty) ...[
+                          const SizedBox(height: 24),
+                          Text('COMPLETION TIMELINE', style: GoogleFonts.plusJakartaSans(fontSize: 10, fontWeight: FontWeight.w900, color: Colors.grey.shade400, letterSpacing: 1.5)),
+                          const SizedBox(height: 16),
+                          SizedBox(
+                            height: 160,
+                            child: LineChart(
+                              LineChartData(
+                                gridData: FlGridData(
+                                  show: true,
+                                  drawVerticalLine: false,
+                                  getDrawingHorizontalLine: (value) => FlLine(color: Colors.grey.shade100, strokeWidth: 1),
+                                ),
+                                titlesData: FlTitlesData(
+                                  show: true,
+                                  bottomTitles: AxisTitles(
+                                    sideTitles: SideTitles(
+                                      showTitles: true,
+                                      reservedSize: 22,
+                                      getTitlesWidget: (value, meta) {
+                                        int idx = value.toInt();
+                                        if (idx >= 0 && idx < dayLabels.length) {
+                                          return Padding(
+                                            padding: const EdgeInsets.only(top: 8.0),
+                                            child: Text(dayLabels[idx], style: GoogleFonts.plusJakartaSans(fontSize: 8, fontWeight: FontWeight.bold, color: Colors.grey.shade500)),
+                                          );
+                                        }
+                                        return const SizedBox();
+                                      },
+                                    ),
+                                  ),
+                                  leftTitles: const AxisTitles(sideTitles: SideTitles(showTitles: false)),
+                                  rightTitles: const AxisTitles(sideTitles: SideTitles(showTitles: false)),
+                                  topTitles: const AxisTitles(sideTitles: SideTitles(showTitles: false)),
+                                ),
+                                borderData: FlBorderData(show: false),
+                                minX: 0,
+                                maxX: 6,
+                                minY: 0,
+                                maxY: 100,
+                                lineBarsData: [
+                                  LineChartBarData(
+                                    spots: syllabusSpots,
+                                    isCurved: true,
+                                    color: _purple,
+                                    barWidth: 3,
+                                    isStrokeCapRound: true,
+                                    dotData: const FlDotData(show: true),
+                                    belowBarData: BarAreaData(
+                                      show: true,
+                                      color: _purple.withValues(alpha: 0.1),
+                                    ),
+                                  ),
+                                ],
+                              ),
+                            ),
+                          ),
+                        ]
                       ],
                     ),
                   ),
@@ -205,52 +308,121 @@ class DashboardScreen extends StatelessWidget {
                   // WEALTH WIDGET (Finance)
                   Text('FINANCIAL SNAPSHOT', style: GoogleFonts.plusJakartaSans(fontSize: 10, fontWeight: FontWeight.w900, color: Colors.grey.shade600, letterSpacing: 1.5)),
                   const SizedBox(height: 12),
-                  Row(
-                    children: [
-                      Expanded(child: _buildFinanceCard('Earned', expProv.totalIncome, _green)),
-                      const SizedBox(width: 16),
-                      Expanded(child: _buildFinanceCard('Spent', expProv.totalExpense, _red600)),
-                    ],
-                  ),
-                  const SizedBox(height: 16),
-                  Row(
-                    children: [
-                      Expanded(child: _buildFinanceCard('Investing', expProv.totalInvestment, _purple, subtitle: '${expProv.investRate.toStringAsFixed(1)}% Rate')),
-                      const SizedBox(width: 16),
-                      Expanded(child: _buildFinanceCard('Debt', expProv.outstandingDebt, _orange, isDebt: true)),
-                    ],
+                  Container(
+                    padding: const EdgeInsets.all(24),
+                    decoration: BoxDecoration(
+                      color: Colors.white,
+                      borderRadius: BorderRadius.circular(32),
+                      boxShadow: const [BoxShadow(color: Color.fromRGBO(0,0,0,0.03), blurRadius: 10, offset: Offset(0, 4))],
+                      border: Border.all(color: Colors.grey.shade100)
+                    ),
+                    child: Column(
+                      children: [
+                        if (expenseBarGroups.isNotEmpty && maxBarValue > 0) ...[
+                          Text('FLOW VS OUTFLOW (LAST 6 MONTHS)', style: GoogleFonts.plusJakartaSans(fontSize: 10, fontWeight: FontWeight.w900, color: Colors.grey.shade400, letterSpacing: 1.5)),
+                          const SizedBox(height: 16),
+                          SizedBox(
+                            height: 160,
+                            child: BarChart(
+                              BarChartData(
+                                alignment: BarChartAlignment.spaceAround,
+                                maxY: maxBarValue * 1.2,
+                                barTouchData: BarTouchData(enabled: false),
+                                titlesData: FlTitlesData(
+                                  show: true,
+                                  bottomTitles: AxisTitles(
+                                    sideTitles: SideTitles(
+                                      showTitles: true,
+                                      getTitlesWidget: (double value, TitleMeta meta) {
+                                        int idx = value.toInt();
+                                        if (idx >= 0 && idx < monthLabels.length) {
+                                          return Padding(
+                                            padding: const EdgeInsets.only(top: 8.0),
+                                            child: Text(monthLabels[idx], 
+                                              style: GoogleFonts.plusJakartaSans(fontSize: 10, fontWeight: FontWeight.bold, color: Colors.grey.shade600)),
+                                          );
+                                        }
+                                        return const SizedBox();
+                                      },
+                                    ),
+                                  ),
+                                  leftTitles: const AxisTitles(sideTitles: SideTitles(showTitles: false)),
+                                  topTitles: const AxisTitles(sideTitles: SideTitles(showTitles: false)),
+                                  rightTitles: const AxisTitles(sideTitles: SideTitles(showTitles: false)),
+                                ),
+                                gridData: FlGridData(
+                                  show: true, 
+                                  drawVerticalLine: false, 
+                                  getDrawingHorizontalLine: (value) => FlLine(color: Colors.grey.shade100, strokeWidth: 1),
+                                ),
+                                borderData: FlBorderData(show: false),
+                                barGroups: expenseBarGroups,
+                              ),
+                            ),
+                          ),
+                          const SizedBox(height: 16),
+                          Row(
+                            mainAxisAlignment: MainAxisAlignment.center,
+                            children: [
+                              _buildChartLegend(color: _green, label: 'Inflow'),
+                              const SizedBox(width: 16),
+                              _buildChartLegend(color: _red600, label: 'Outflow'),
+                            ],
+                          ),
+                          const SizedBox(height: 24),
+                        ],
+                        Row(
+                          children: [
+                            Expanded(child: _buildFinanceCard('Earned', expProv.totalIncome, _green)),
+                            const SizedBox(width: 16),
+                            Expanded(child: _buildFinanceCard('Spent', expProv.totalExpense, _red600)),
+                          ],
+                        ),
+                        const SizedBox(height: 16),
+                        Row(
+                          children: [
+                            Expanded(child: _buildFinanceCard('Investing', expProv.totalInvestment, _purple, subtitle: '${expProv.investRate.toStringAsFixed(1)}% Rate')),
+                            const SizedBox(width: 16),
+                            Expanded(child: _buildFinanceCard('Debt', expProv.outstandingDebt, _orange, isDebt: true)),
+                          ],
+                        ),
+                      ],
+                    ),
                   ),
                   
                   const SizedBox(height: 24),
                   
                   // TIMETABLE QUICK ACTION
-                  Container(
-                    padding: const EdgeInsets.all(24),
-                    decoration: BoxDecoration(
-                      color: Colors.red.shade50,
-                      borderRadius: BorderRadius.circular(32),
-                      border: Border.all(color: Colors.red.shade100)
-                    ),
-                    child: Row(
-                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                      children: [
-                        Column(
-                          crossAxisAlignment: CrossAxisAlignment.start,
-                          children: [
-                             Text('UPCOMING CLASSES', style: GoogleFonts.plusJakartaSans(fontSize: 10, fontWeight: FontWeight.w900, color: _red600, letterSpacing: 1.5)),
-                             const SizedBox(height: 4),
-                             Text('${timeProv.getItemsForDay(DateTime.now().weekday).where((e) {
-                               final now = TimeOfDay.now();
-                               return (e.startHour * 60 + e.startMinute) > (now.hour * 60 + now.minute);
-                             }).length} Remaining Today', style: GoogleFonts.plusJakartaSans(fontSize: 16, fontWeight: FontWeight.bold, color: Colors.grey.shade800)),
-                          ],
-                        ),
-                        Container(
-                          width: 48, height: 48,
-                          decoration: BoxDecoration(color: Colors.white, borderRadius: BorderRadius.circular(16), border: Border.all(color: Colors.red.shade100)),
-                          child: const Icon(Icons.arrow_forward, color: _red600),
-                        )
-                      ],
+                  GestureDetector(
+                    onTap: onNavigateToTimetable,
+                    child: Container(
+                      padding: const EdgeInsets.all(24),
+                      decoration: BoxDecoration(
+                        color: Colors.red.shade50,
+                        borderRadius: BorderRadius.circular(32),
+                        border: Border.all(color: Colors.red.shade100)
+                      ),
+                      child: Row(
+                        mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                        children: [
+                          Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
+                               Text('UPCOMING CLASSES', style: GoogleFonts.plusJakartaSans(fontSize: 10, fontWeight: FontWeight.w900, color: _red600, letterSpacing: 1.5)),
+                               const SizedBox(height: 4),
+                               Text('${timeProv.getItemsForDay(DateTime.now().weekday).where((e) {
+                                 final now = TimeOfDay.now();
+                                 return (e.startHour * 60 + e.startMinute) > (now.hour * 60 + now.minute);
+                               }).length} Remaining Today', style: GoogleFonts.plusJakartaSans(fontSize: 16, fontWeight: FontWeight.bold, color: Colors.grey.shade800)),
+                            ],
+                          ),
+                          Container(
+                            width: 48, height: 48,
+                            decoration: BoxDecoration(color: Colors.white, borderRadius: BorderRadius.circular(16), border: Border.all(color: Colors.red.shade100)),
+                            child: const Icon(Icons.arrow_forward, color: _red600),
+                          )
+                        ],
+                      ),
                     ),
                   )
 
@@ -302,6 +474,16 @@ class DashboardScreen extends StatelessWidget {
       children: [
         Text(value, style: GoogleFonts.plusJakartaSans(fontSize: 18, fontWeight: FontWeight.w900, color: valColor)),
         Text(label, style: GoogleFonts.plusJakartaSans(fontSize: 9, fontWeight: FontWeight.bold, color: Colors.grey.shade500, letterSpacing: 0.5)),
+      ],
+    );
+  }
+
+  Widget _buildChartLegend({required Color color, required String label}) {
+    return Row(
+      children: [
+        Container(width: 12, height: 12, decoration: BoxDecoration(color: color, shape: BoxShape.circle)),
+        const SizedBox(width: 8),
+        Text(label, style: GoogleFonts.plusJakartaSans(fontSize: 10, fontWeight: FontWeight.bold, color: Colors.grey.shade700)),
       ],
     );
   }

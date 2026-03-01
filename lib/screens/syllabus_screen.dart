@@ -605,9 +605,19 @@ class _SubjectDetailScreenState extends State<SubjectDetailScreen> {
                     Row(
                       children: [
                         GestureDetector(
-                          onTap: () {
-                             provider.deleteSubject(widget.subject);
-                             Navigator.pop(context);
+                          onTap: () async {
+                             final res = await showDialog<bool>(context: context, builder: (ctx) => AlertDialog(
+                               title: const Text('Delete Subject'),
+                               content: const Text('Are you sure you want to delete this subject?'),
+                               actions: [
+                                 TextButton(onPressed: () => Navigator.pop(ctx, false), child: const Text('Cancel', style: TextStyle(color: Colors.grey))),
+                                 FilledButton(onPressed: () => Navigator.pop(ctx, true), style: FilledButton.styleFrom(backgroundColor: _red600), child: const Text('Delete')),
+                               ],
+                             ));
+                             if (res == true) {
+                               provider.deleteSubject(widget.subject);
+                               if (context.mounted) Navigator.pop(context);
+                             }
                           },
                           child: const Icon(Icons.delete_outline, color: _red600, size: 28),
                         ),
@@ -668,9 +678,19 @@ class _SubjectDetailScreenState extends State<SubjectDetailScreen> {
                               Text('TARGET', style: GoogleFonts.plusJakartaSans(fontSize: 10, fontWeight: FontWeight.w900, color: Colors.grey.shade400, letterSpacing: 1.5)),
                               const SizedBox(width: 8),
                               GestureDetector(
-                                onTap: () {
-                                  provider.deleteExam(widget.subject, activeExam!);
-                                  setState(() => _activeExamId = 'all');
+                                onTap: () async {
+                                  final res = await showDialog<bool>(context: context, builder: (ctx) => AlertDialog(
+                                    title: const Text('Delete Exam'),
+                                    content: const Text('Are you sure you want to delete this exam?'),
+                                    actions: [
+                                      TextButton(onPressed: () => Navigator.pop(ctx, false), child: const Text('Cancel', style: TextStyle(color: Colors.grey))),
+                                      FilledButton(onPressed: () => Navigator.pop(ctx, true), style: FilledButton.styleFrom(backgroundColor: Colors.red), child: const Text('Delete')),
+                                    ],
+                                  ));
+                                  if (res == true) {
+                                    provider.deleteExam(widget.subject, activeExam!);
+                                    setState(() => _activeExamId = 'all');
+                                  }
                                 },
                                 child: const Icon(Icons.delete_outline, size: 16, color: Colors.red),
                               ),
@@ -737,7 +757,10 @@ class _SubjectDetailScreenState extends State<SubjectDetailScreen> {
                               ),
                             )
                           else
-                            Text('${activeExam.marksObtained}/${activeExam.maxMarks}', style: GoogleFonts.plusJakartaSans(fontSize: 16, fontWeight: FontWeight.w900, color: Colors.green)),
+                            GestureDetector(
+                              onTap: () => _openResultModal(context, provider, activeExam!),
+                              child: Text('${activeExam.marksObtained?.toStringAsFixed(1).replaceAll(RegExp(r'\\.0\$'), '')}/${activeExam.maxMarks.toStringAsFixed(1).replaceAll(RegExp(r'\\.0\$'), '')}', style: GoogleFonts.plusJakartaSans(fontSize: 16, fontWeight: FontWeight.w900, color: Colors.green)),
+                            ),
                         ],
                       )
                     ],
@@ -836,57 +859,65 @@ class _SubjectDetailScreenState extends State<SubjectDetailScreen> {
   }
   
   void _openResultModal(BuildContext context, SyllabusProvider provider, SyllabusExam exam) {
-    final ctrl = TextEditingController();
+    final ctrl = TextEditingController(text: exam.marksObtained?.toStringAsFixed(1).replaceAll(RegExp(r'\.0$'), '') ?? '');
     showModalBottomSheet(
       context: context,
+      isScrollControlled: true,
       backgroundColor: Colors.transparent,
-      builder: (ctx) => Container(
-        padding: const EdgeInsets.all(40),
-        decoration: const BoxDecoration(color: Colors.white, borderRadius: BorderRadius.vertical(top: Radius.circular(48))),
-        child: Column(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            Container(width: 64, height: 4, decoration: BoxDecoration(color: Colors.grey.shade100, borderRadius: BorderRadius.circular(4))),
-            const SizedBox(height: 32),
-            Text('Exam Result', style: GoogleFonts.plusJakartaSans(fontSize: 24, fontWeight: FontWeight.w900)),
-            const SizedBox(height: 32),
-            Row(
-              mainAxisAlignment: MainAxisAlignment.center,
-              children: [
-                Container(
-                  width: 110,
-                  decoration: BoxDecoration(color: Colors.grey.shade50, borderRadius: BorderRadius.circular(24)),
-                  child: TextField(
-                    controller: ctrl,
-                    keyboardType: TextInputType.number,
-                    textAlign: TextAlign.center,
-                    style: GoogleFonts.plusJakartaSans(fontSize: 60, fontWeight: FontWeight.w900),
-                    decoration: const InputDecoration(border: InputBorder.none),
+      builder: (ctx) => SingleChildScrollView(
+        child: Container(
+          padding: EdgeInsets.only(
+            bottom: MediaQuery.of(ctx).viewInsets.bottom + 40,
+            top: 40,
+            left: 20,
+            right: 20,
+          ),
+          decoration: const BoxDecoration(color: Colors.white, borderRadius: BorderRadius.vertical(top: Radius.circular(48))),
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              Container(width: 64, height: 4, decoration: BoxDecoration(color: Colors.grey.shade100, borderRadius: BorderRadius.circular(4))),
+              const SizedBox(height: 32),
+              Text('Exam Result', style: GoogleFonts.plusJakartaSans(fontSize: 24, fontWeight: FontWeight.w900)),
+              const SizedBox(height: 32),
+              Row(
+                mainAxisAlignment: MainAxisAlignment.center,
+                children: [
+                  Container(
+                    width: 100,
+                    decoration: BoxDecoration(color: Colors.grey.shade50, borderRadius: BorderRadius.circular(24)),
+                    child: TextField(
+                      controller: ctrl,
+                      keyboardType: const TextInputType.numberWithOptions(decimal: true),
+                      textAlign: TextAlign.center,
+                      style: GoogleFonts.plusJakartaSans(fontSize: 48, fontWeight: FontWeight.w900),
+                      decoration: const InputDecoration(border: InputBorder.none),
+                    ),
                   ),
-                ),
-                const SizedBox(width: 24),
-                Text('/', style: GoogleFonts.plusJakartaSans(fontSize: 36, fontWeight: FontWeight.w900, color: Colors.grey.shade200)),
-                const SizedBox(width: 24),
-                Text('${exam.maxMarks.toInt()}', style: GoogleFonts.plusJakartaSans(fontSize: 48, fontWeight: FontWeight.w900, color: Colors.grey.shade300)),
-              ],
-            ),
-            const SizedBox(height: 32),
-            GestureDetector(
-              onTap: () {
-                double marks = double.tryParse(ctrl.text) ?? 0;
-                if (marks > exam.maxMarks) marks = exam.maxMarks;
-                provider.updateExamMarks(widget.subject, exam, marks);
-                Navigator.pop(ctx);
-              },
-              child: Container(
-                width: double.infinity,
-                padding: const EdgeInsets.symmetric(vertical: 24),
-                decoration: BoxDecoration(color: Colors.green.shade500, borderRadius: BorderRadius.circular(32), boxShadow: [BoxShadow(color: Colors.green.shade100, blurRadius: 20, offset: const Offset(0, 10))]),
-                alignment: Alignment.center,
-                child: Text('LOG MARKS', style: GoogleFonts.plusJakartaSans(fontSize: 20, fontWeight: FontWeight.w900, color: Colors.white)),
+                  const SizedBox(width: 16),
+                  Text('/', style: GoogleFonts.plusJakartaSans(fontSize: 36, fontWeight: FontWeight.w900, color: Colors.grey.shade200)),
+                  const SizedBox(width: 16),
+                  Text('${exam.maxMarks.toInt()}', style: GoogleFonts.plusJakartaSans(fontSize: 48, fontWeight: FontWeight.w900, color: Colors.grey.shade300)),
+                ],
               ),
-            )
-          ],
+              const SizedBox(height: 32),
+              GestureDetector(
+                onTap: () {
+                  double marks = double.tryParse(ctrl.text) ?? 0;
+                  if (marks > exam.maxMarks) marks = exam.maxMarks;
+                  provider.updateExamMarks(widget.subject, exam, marks);
+                  Navigator.pop(ctx);
+                },
+                child: Container(
+                  width: double.infinity,
+                  padding: const EdgeInsets.symmetric(vertical: 24),
+                  decoration: BoxDecoration(color: Colors.green.shade500, borderRadius: BorderRadius.circular(32), boxShadow: [BoxShadow(color: Colors.green.shade100, blurRadius: 20, offset: const Offset(0, 10))]),
+                  alignment: Alignment.center,
+                  child: Text('LOG MARKS', style: GoogleFonts.plusJakartaSans(fontSize: 20, fontWeight: FontWeight.w900, color: Colors.white)),
+                ),
+              )
+            ],
+          ),
         ),
       )
     );

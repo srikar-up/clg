@@ -71,18 +71,18 @@ class MainDashboard extends StatefulWidget {
 class _MainDashboardState extends State<MainDashboard> {
   int _index = 0;
   
-  final List<Widget> _screens = [
-    const DashboardScreen(),
-    const TimetableScreen(),
-    const LifeOsScreen(),
-    const ExpenseScreen(), // Now connected
-    const SyllabusScreen(), // Now connected
-  ];
-
   @override
   Widget build(BuildContext context) {
+    final List<Widget> screens = [
+      DashboardScreen(onNavigateToTimetable: () => setState(() => _index = 1)),
+      const TimetableScreen(),
+      const LifeOsScreen(),
+      const ExpenseScreen(),
+      const SyllabusScreen(),
+    ];
+
     return Scaffold(
-      body: _screens[_index],
+      body: screens[_index],
       bottomNavigationBar: NavigationBar(
         backgroundColor: Colors.white,
         selectedIndex: _index,

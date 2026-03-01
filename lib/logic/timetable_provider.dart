@@ -109,6 +109,35 @@ class TimetableProvider extends ChangeNotifier {
     return false;
   }
 
+  // PROGRESS CALCULATOR
+  double calculateDailyProgress(int weekday) {
+    final items = getItemsForDay(weekday);
+    if (items.isEmpty) return 0.0;
+    int total = items.length;
+    int attended = items.where((i) => i.attended == true).length;
+    return (attended / total).clamp(0.0, 1.0);
+  }
+
+  // TIME TO NEXT CLASS
+  String getTimeToNextClass() {
+    final status = getNowAndNext();
+    final next = status['next'];
+    if (next == null) return "No upcoming classes today";
+
+    final now = TimeOfDay.now();
+    int nowMin = now.hour * 60 + now.minute;
+    int startMin = next.startHour * 60 + next.startMinute;
+    int diffMins = startMin - nowMin;
+
+    if (diffMins <= 0) return "Starting now";
+    if (diffMins < 60) return "in $diffMins min${diffMins == 1 ? '' : 's'}";
+    
+    int hours = diffMins ~/ 60;
+    int mins = diffMins % 60;
+    if (mins == 0) return "in $hours hr${hours == 1 ? '' : 's'}";
+    return "in $hours hr${hours == 1 ? '' : 's'} $mins min";
+  }
+
   // JSON IMPORT
   String importJson(String jsonStr) {
     try {

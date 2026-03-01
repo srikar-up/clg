@@ -1,8 +1,15 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:provider/provider.dart';
+import 'package:google_fonts/google_fonts.dart';
 import '../logic/timetable_provider.dart';
 import '../data/models.dart';
+
+const _bgPrimary = Color(0xFFFEF2F2);
+const _textPrimary = Color(0xFF111827);
+const _gradStart = Color(0xFFEF4444);
+const _gradEnd = Color(0xFF991B1B);
+const _red600 = Color(0xFFDC2626);
 
 class TimetableScreen extends StatefulWidget {
   const TimetableScreen({super.key});
@@ -26,50 +33,104 @@ class _TimetableScreenState extends State<TimetableScreen> with SingleTickerProv
     final provider = context.watch<TimetableProvider>();
 
     return Scaffold(
-      appBar: AppBar(
-        title: const Text('Timetable'),
-        elevation: 0,
-        actions: [
-          // AI Import Button
-          IconButton(
-            icon: const Icon(Icons.smart_toy_outlined),
-            tooltip: 'AI Auto-Import',
-            onPressed: () => _showAiHelper(context, provider),
-          ),
-        ],
-        bottom: TabBar(
-          controller: _tabController,
-          isScrollable: true,
-          labelColor: Colors.red.shade700,
-          unselectedLabelColor: Colors.grey,
-          labelStyle: const TextStyle(fontSize: 11, fontWeight: FontWeight.w600),
-          unselectedLabelStyle: const TextStyle(fontSize: 11),
-          labelPadding: const EdgeInsets.symmetric(horizontal: 8),
-          indicatorColor: Colors.redAccent,
-          indicatorWeight: 2,
-          physics: const BouncingScrollPhysics(),
-          tabs: const [
-            Tab(text: 'Mon'),
-            Tab(text: 'Tue'),
-            Tab(text: 'Wed'),
-            Tab(text: 'Thu'),
-            Tab(text: 'Fri'),
-            Tab(text: 'Sat'),
-            Tab(text: 'Sun'),
+      backgroundColor: _bgPrimary,
+      body: SafeArea(
+        child: Column(
+          children: [
+            // Floating Custom Header
+            Container(
+              padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 20),
+              decoration: const BoxDecoration(
+                color: Colors.white,
+                border: Border(bottom: BorderSide(color: Color(0xFFF3F4F6))),
+              ),
+              child: Row(
+                mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                children: [
+                  Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Text('Life OS', style: GoogleFonts.plusJakartaSans(fontSize: 20, fontWeight: FontWeight.w800, color: _textPrimary, letterSpacing: -0.5)),
+                      Text('TIMETABLE', style: GoogleFonts.plusJakartaSans(fontSize: 10, fontWeight: FontWeight.w900, color: _red600, letterSpacing: 1.5)),
+                    ],
+                  ),
+                  Row(
+                    children: [
+                      GestureDetector(
+                        onTap: () => _showAiHelper(context, provider),
+                        child: Container(
+                          padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+                          decoration: BoxDecoration(
+                            color: Colors.red.shade50,
+                            borderRadius: BorderRadius.circular(16),
+                            border: Border.all(color: Colors.red.shade100),
+                          ),
+                          child: Row(
+                            children: [
+                              const Icon(Icons.smart_toy, size: 12, color: _red600),
+                              const SizedBox(width: 6),
+                              Text('AI SYNC', style: GoogleFonts.plusJakartaSans(fontSize: 10, fontWeight: FontWeight.w900, color: _red600)),
+                            ],
+                          ),
+                        ),
+                      )
+                    ],
+                  )
+                ],
+              ),
+            ),
+            
+            // Tab Bar
+            Container(
+              color: Colors.white,
+              child: TabBar(
+                controller: _tabController,
+                isScrollable: true,
+                padding: const EdgeInsets.symmetric(vertical: 8),
+                indicator: BoxDecoration(
+                  color: _red600,
+                  borderRadius: BorderRadius.circular(20),
+                  boxShadow: [BoxShadow(color: Colors.red.shade200, blurRadius: 8, offset: const Offset(0, 4))],
+                ),
+                indicatorSize: TabBarIndicatorSize.tab,
+                labelColor: Colors.white,
+                unselectedLabelColor: Colors.grey.shade500,
+                labelStyle: GoogleFonts.plusJakartaSans(fontSize: 12, fontWeight: FontWeight.w900, letterSpacing: 0.5),
+                unselectedLabelStyle: GoogleFonts.plusJakartaSans(fontSize: 12, fontWeight: FontWeight.bold),
+                tabAlignment: TabAlignment.start,
+                dividerColor: Colors.transparent,
+                physics: const BouncingScrollPhysics(),
+                tabs: const [
+                  Tab(height: 36, child: Padding(padding: EdgeInsets.symmetric(horizontal: 8), child: Text('MON'))),
+                  Tab(height: 36, child: Padding(padding: EdgeInsets.symmetric(horizontal: 8), child: Text('TUE'))),
+                  Tab(height: 36, child: Padding(padding: EdgeInsets.symmetric(horizontal: 8), child: Text('WED'))),
+                  Tab(height: 36, child: Padding(padding: EdgeInsets.symmetric(horizontal: 8), child: Text('THU'))),
+                  Tab(height: 36, child: Padding(padding: EdgeInsets.symmetric(horizontal: 8), child: Text('FRI'))),
+                  Tab(height: 36, child: Padding(padding: EdgeInsets.symmetric(horizontal: 8), child: Text('SAT'))),
+                  Tab(height: 36, child: Padding(padding: EdgeInsets.symmetric(horizontal: 8), child: Text('SUN'))),
+                ],
+              ),
+            ),
+
+            // Timetable Content Views
+            Expanded(
+              child: TabBarView(
+                controller: _tabController,
+                children: List.generate(7, (index) {
+                  final day = index + 1; // 1 = Mon, 7 = Sun
+                  return _DayScheduleView(day: day, provider: provider);
+                }),
+              ),
+            ),
           ],
         ),
       ),
-      body: TabBarView(
-        controller: _tabController,
-        children: List.generate(7, (index) {
-          final day = index + 1; // 1 = Mon, 7 = Sun
-          return _DayScheduleView(day: day, provider: provider);
-        }),
-      ),
       floatingActionButton: FloatingActionButton(
         onPressed: () => _showManualAdd(context, provider),
-        backgroundColor: Colors.red.shade600,
-        child: const Icon(Icons.add),
+        backgroundColor: _red600,
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(32)),
+        elevation: 8,
+        child: const Icon(Icons.add, color: Colors.white),
       ),
     );
   }
@@ -278,14 +339,14 @@ class _DayScheduleViewState extends State<_DayScheduleView> {
     final isLunch = isToday ? provider.isLunchGap() : false;
 
     return Container(
-      color: const Color(0xFFFBF8FF),
+      color: Colors.transparent,
       child: isToday
         ? Column(
             children: [
               // Fixed Now & Upcoming section
               Container(
-                color: const Color(0xFFFBF8FF),
-                padding: const EdgeInsets.all(16),
+                color: Colors.transparent,
+                padding: const EdgeInsets.all(20),
                 child: LayoutBuilder(builder: (ctx, constraints) {
                   final now = TimeOfDay.now();
                   final nowMin = now.hour * 60 + now.minute;
@@ -308,39 +369,47 @@ class _DayScheduleViewState extends State<_DayScheduleView> {
                           height: 120,
                           decoration: BoxDecoration(
                             color: Colors.white,
-                            borderRadius: BorderRadius.circular(12),
-                            border: Border.all(color: Colors.grey.shade200),
-                            boxShadow: [BoxShadow(color: Colors.black.withValues(alpha: 0.03), blurRadius: 10, offset: const Offset(0, 2))],
+                            borderRadius: BorderRadius.circular(32),
+                            border: Border.all(color: Colors.white, width: 2),
+                            boxShadow: const [BoxShadow(color: Color.fromRGBO(220, 38, 38, 0.12), blurRadius: 30, spreadRadius: -10, offset: Offset(0, 15))],
                           ),
                           child: Column(
                             crossAxisAlignment: CrossAxisAlignment.start,
                             children: [
                               Padding(
-                                padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
-                                child: Text('Upcoming', style: TextStyle(fontSize: 12, fontWeight: FontWeight.bold, color: Colors.grey.shade800)),
+                                padding: const EdgeInsets.only(left: 16, top: 12, right: 16, bottom: 4),
+                                child: Row(
+                                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                                  children: [
+                                    Text('UPCOMING', style: GoogleFonts.plusJakartaSans(fontSize: 10, fontWeight: FontWeight.w900, color: Colors.grey.shade400, letterSpacing: 1.5)),
+                                    if (provider.getNowAndNext()['next'] != null)
+                                      Text(provider.getTimeToNextClass(), style: GoogleFonts.plusJakartaSans(fontSize: 10, fontWeight: FontWeight.bold, color: _red600)),
+                                  ],
+                                ),
                               ),
                               Expanded(
                                 child: ClipRRect(
-                                  borderRadius: const BorderRadius.vertical(bottom: Radius.circular(12)),
+                                  borderRadius: const BorderRadius.vertical(bottom: Radius.circular(32)),
                                   child: Container(
                                     color: Colors.transparent,
                                     child: upcoming.isEmpty
                                         ? Padding(
-                                            padding: const EdgeInsets.all(8.0),
-                                            child: Text('No upcoming classes', style: TextStyle(color: Colors.grey.shade600, fontSize: 12)),
+                                            padding: const EdgeInsets.symmetric(horizontal: 16),
+                                            child: Text('Free time ✨', style: GoogleFonts.plusJakartaSans(color: Colors.grey.shade400, fontSize: 13, fontWeight: FontWeight.bold)),
                                           )
                                         : SingleChildScrollView(
                                             scrollDirection: Axis.horizontal,
+                                            padding: const EdgeInsets.symmetric(horizontal: 8),
                                             child: Row(
                                               children: [
                                                 for (var item in upcoming)
                                                   Padding(
-                                                    padding: const EdgeInsets.symmetric(horizontal: 6),
+                                                    padding: const EdgeInsets.symmetric(horizontal: 4),
                                                     child: Dismissible(
                                                       key: ValueKey('upcoming-${item.id}'),
                                                       direction: DismissDirection.up,
                                                       background: Container(
-                                                        decoration: BoxDecoration(color: Colors.red.shade600, borderRadius: BorderRadius.circular(12)),
+                                                        decoration: BoxDecoration(color: _red600, borderRadius: BorderRadius.circular(24)),
                                                         alignment: Alignment.center,
                                                         child: const Icon(Icons.delete, color: Colors.white),
                                                       ),
@@ -350,7 +419,7 @@ class _DayScheduleViewState extends State<_DayScheduleView> {
                                                           content: const Text('Remove this class?'),
                                                           actions: [
                                                             TextButton(onPressed: () => Navigator.pop(ctx, false), child: const Text('Cancel')),
-                                                            FilledButton(onPressed: () => Navigator.pop(ctx, true), child: const Text('Delete')),
+                                                            FilledButton(onPressed: () => Navigator.pop(ctx, true), style: FilledButton.styleFrom(backgroundColor: _red600), child: const Text('Delete')),
                                                           ],
                                                         ));
                                                         return res ?? false;
@@ -377,15 +446,29 @@ class _DayScheduleViewState extends State<_DayScheduleView> {
                 }),
               ),
 
-              // Fixed Today's Schedule header
+              // Daily Progress Header
               Padding(
-                padding: const EdgeInsets.symmetric(horizontal: 16),
-                child: Text(
-                  "Today's Schedule", 
-                  style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold, color: Colors.grey.shade800)
+                padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 4),
+                child: Row(
+                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                  children: [
+                    Text(
+                      "TODAY'S SCHEDULE", 
+                      style: GoogleFonts.plusJakartaSans(fontSize: 10, fontWeight: FontWeight.w900, color: Colors.grey.shade500, letterSpacing: 1.5)
+                    ),
+                    if (items.isNotEmpty)
+                      Container(
+                        padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
+                        decoration: BoxDecoration(color: Colors.green.shade50, borderRadius: BorderRadius.circular(12)),
+                        child: Text(
+                          "${(provider.calculateDailyProgress(day) * 100).toInt()}% Done",
+                          style: GoogleFonts.plusJakartaSans(fontSize: 10, fontWeight: FontWeight.w900, color: Colors.green.shade700)
+                        ),
+                      )
+                  ],
                 ),
               ),
-              const SizedBox(height: 12),
+              const SizedBox(height: 8),
 
               // Scrollable schedule content
               Expanded(
@@ -429,13 +512,19 @@ class _DayScheduleViewState extends State<_DayScheduleView> {
                       // --- TIMETABLE LIST SECTION ---
                       if (items.isEmpty) 
                          Padding(
-                           padding: const EdgeInsets.only(top: 40),
+                           padding: const EdgeInsets.only(top: 60),
                            child: Center(
                              child: Column(
                                children: [
-                                 Icon(Icons.event_busy, size: 48, color: Colors.grey.shade300),
-                                 const SizedBox(height: 10),
-                                 const Text("No classes scheduled.", style: TextStyle(color: Colors.grey)),
+                                 Container(
+                                   padding: const EdgeInsets.all(24),
+                                   decoration: BoxDecoration(color: Colors.white, shape: BoxShape.circle, boxShadow: [BoxShadow(color: Colors.black.withValues(alpha: 0.05), blurRadius: 20)]),
+                                   child: const Icon(Icons.celebration_rounded, size: 48, color: _red600),
+                                 ),
+                                 const SizedBox(height: 20),
+                                 Text("No classes today!", style: GoogleFonts.plusJakartaSans(fontSize: 18, fontWeight: FontWeight.w900, color: Colors.grey.shade800)),
+                                 const SizedBox(height: 4),
+                                 Text("Enjoy your free time.", style: GoogleFonts.plusJakartaSans(color: Colors.grey.shade500, fontWeight: FontWeight.w600)),
                                ],
                              ),
                            ),
@@ -498,54 +587,65 @@ class _StatusCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final bgColor = isActive ? Colors.red.shade600 : Colors.white;
-    final txtColor = isActive ? Colors.white : Colors.black87;
-    
     return Container(
       height: 120,
       decoration: BoxDecoration(
-        color: bgColor,
-        borderRadius: BorderRadius.circular(12),
-        boxShadow: isActive ? [BoxShadow(color: bgColor.withValues(alpha: 0.18), blurRadius: 10, offset: const Offset(0, 6))] : [BoxShadow(color: Colors.black.withValues(alpha: 0.03), blurRadius: 6, offset: const Offset(0, 2))],
-        border: isActive ? null : Border.all(color: Colors.grey.shade200),
+        color: isActive ? null : Colors.white,
+        gradient: isActive ? const LinearGradient(colors: [_gradStart, _gradEnd], begin: Alignment.topLeft, end: Alignment.bottomRight) : null,
+        borderRadius: BorderRadius.circular(32),
+        boxShadow: isActive ? const [BoxShadow(color: Color.fromRGBO(220, 38, 38, 0.3), blurRadius: 30, spreadRadius: -10, offset: Offset(0, 15))] : const [BoxShadow(color: Color.fromRGBO(220, 38, 38, 0.05), blurRadius: 20, spreadRadius: -10, offset: Offset(0, 10))],
+        border: Border.all(color: Colors.white, width: 2),
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           Padding(
-            padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
-            child: Text(title, style: TextStyle(color: txtColor.withValues(alpha: 0.95), fontSize: 12, fontWeight: FontWeight.bold, letterSpacing: 0.6)),
+            padding: const EdgeInsets.only(left: 16, top: 12, right: 16, bottom: 4),
+            child: Text(title, style: GoogleFonts.plusJakartaSans(color: isActive ? Colors.white70 : Colors.grey.shade400, fontSize: 10, fontWeight: FontWeight.w900, letterSpacing: 1.5)),
           ),
           Expanded(
             child: Padding(
-              padding: const EdgeInsets.symmetric(horizontal: 12),
-              child: Row(crossAxisAlignment: CrossAxisAlignment.center, children: [
-                Expanded(
-                  child: Column(crossAxisAlignment: CrossAxisAlignment.start, mainAxisAlignment: MainAxisAlignment.center, children: [
-                    item == null
-                          ? Text(isActive ? "Free Time" : "Nothing later", key: const ValueKey('empty'), style: TextStyle(color: txtColor, fontSize: 14, fontWeight: FontWeight.w600))
-                          : Column(
-                              key: ValueKey(item!.id),
-                              crossAxisAlignment: CrossAxisAlignment.start,
-                              children: [
-                                Text(
-                                  item!.title,
-                                  maxLines: 1,
-                                  overflow: TextOverflow.ellipsis,
-                                  style: TextStyle(color: txtColor, fontSize: 15, fontWeight: FontWeight.bold),
-                                ),
-                                const SizedBox(height: 4),
-                                Text(
-                                  "${item!.location} • ${_fmt(item!.startHour, item!.startMinute)}",
-                                  style: TextStyle(color: txtColor.withValues(alpha: 0.9), fontSize: 12),
-                                ),
-                              ],
-                            ),
-                  ]),
-                ),
-                if (isActive) const SizedBox(width: 8),
-                if (isActive) Icon(Icons.circle, size: 12, color: Colors.white.withValues(alpha: 0.9)),
-              ]),
+              padding: const EdgeInsets.symmetric(horizontal: 16),
+              child: Row(
+                crossAxisAlignment: CrossAxisAlignment.center,
+                children: [
+                  Expanded(
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      mainAxisAlignment: MainAxisAlignment.center,
+                      children: [
+                        item == null
+                            ? Text(isActive ? "Free Time" : "Nothing later", key: const ValueKey('empty'), style: GoogleFonts.plusJakartaSans(color: isActive ? Colors.white : Colors.grey.shade800, fontSize: 16, fontWeight: FontWeight.w900))
+                            : Column(
+                                key: ValueKey(item!.id),
+                                crossAxisAlignment: CrossAxisAlignment.start,
+                                mainAxisSize: MainAxisSize.min,
+                                children: [
+                                  Text(
+                                    item!.title,
+                                    maxLines: 1,
+                                    overflow: TextOverflow.ellipsis,
+                                    style: GoogleFonts.plusJakartaSans(color: isActive ? Colors.white : Colors.grey.shade800, fontSize: 18, fontWeight: FontWeight.w900),
+                                  ),
+                                  const SizedBox(height: 4),
+                                  Text(
+                                    "${item!.location} • ${_fmt(item!.startHour, item!.startMinute)}",
+                                    style: GoogleFonts.plusJakartaSans(color: isActive ? Colors.white70 : Colors.grey.shade500, fontSize: 11, fontWeight: FontWeight.bold),
+                                  ),
+                                ],
+                              ),
+                      ],
+                    ),
+                  ),
+                  if (isActive) const SizedBox(width: 8),
+                  if (isActive)
+                    Container(
+                      padding: const EdgeInsets.all(8),
+                      decoration: BoxDecoration(color: Colors.white.withValues(alpha: 0.2), shape: BoxShape.circle),
+                      child: const Icon(Icons.bolt, color: Colors.white, size: 16),
+                    )
+                ],
+              ),
             ),
           ),
         ],
@@ -565,54 +665,74 @@ class _ClassTile extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final bool isExam = item.type == 'exam';
-    // All class tiles now have red stripe
-    final Color stripeColor = Colors.red;
+    final Color stripeColor = isExam ? Colors.orange : _red600;
 
     return Container(
-      margin: const EdgeInsets.only(bottom: 12),
+      margin: const EdgeInsets.only(bottom: 16),
       decoration: BoxDecoration(
-        color: isExam ? Colors.red.shade50 : Colors.white,
-        borderRadius: BorderRadius.circular(12),
-        border: isExam ? Border.all(color: Colors.red.shade200) : null,
-        boxShadow: [BoxShadow(color: Colors.black.withValues(alpha: 0.03), blurRadius: 8, offset: const Offset(0, 2))],
+        color: Colors.white,
+        borderRadius: BorderRadius.circular(32),
+        border: Border.all(color: Colors.white, width: 2),
+        boxShadow: const [BoxShadow(color: Color.fromRGBO(220, 38, 38, 0.08), blurRadius: 30, spreadRadius: -10, offset: Offset(0, 15))],
       ),
+      clipBehavior: Clip.antiAlias,
       child: IntrinsicHeight(
         child: Row(
           children: [
             // Colored Stripe
             Container(
-              width: 6,
+              width: 8,
               decoration: BoxDecoration(
                 color: stripeColor,
-                borderRadius: const BorderRadius.horizontal(left: Radius.circular(12)),
               ),
             ),
             // Content
             Expanded(
               child: Padding(
-                padding: const EdgeInsets.all(12),
+                padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 20),
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
                     Row(
                       mainAxisAlignment: MainAxisAlignment.spaceBetween,
                       children: [
-                        Text(
-                          item.title, 
-                          style: TextStyle(
-                            fontWeight: FontWeight.bold, 
-                            fontSize: 16,
-                            color: isExam ? Colors.red.shade900 : Colors.black87
-                          )
+                        Expanded(
+                          child: Text(
+                            item.title, 
+                            style: GoogleFonts.plusJakartaSans(
+                              fontWeight: FontWeight.w900, 
+                              fontSize: 18,
+                              color: Colors.grey.shade900
+                            )
+                          ),
                         ),
                         if (isExam) 
-                          const Icon(Icons.warning_amber_rounded, color: Colors.red, size: 18),
+                          Container(
+                            padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                            decoration: BoxDecoration(color: Colors.orange.shade50, borderRadius: BorderRadius.circular(8)),
+                            child: Text('EXAM', style: GoogleFonts.plusJakartaSans(fontSize: 9, fontWeight: FontWeight.w900, color: Colors.orange.shade800, letterSpacing: 1.5)),
+                          )
+                        else
+                          Container(
+                            padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                            decoration: BoxDecoration(color: Colors.red.shade50, borderRadius: BorderRadius.circular(8)),
+                            child: Text(item.type.toUpperCase(), style: GoogleFonts.plusJakartaSans(fontSize: 9, fontWeight: FontWeight.w900, color: _red600, letterSpacing: 1.5)),
+                          )
                       ],
                     ),
-                    const SizedBox(height: 4),
-                    Text(
-                      "${item.location} • ${_fmt(item.startHour, item.startMinute)} - ${_fmt(item.endHour, item.endMinute)}",
-                      style: TextStyle(color: Colors.grey.shade600, fontSize: 13),
+                    const SizedBox(height: 12),
+                    Row(
+                      children: [
+                        Icon(Icons.location_on, size: 14, color: Colors.grey.shade400),
+                        const SizedBox(width: 4),
+                        Flexible(
+                          child: Text(item.location, style: GoogleFonts.plusJakartaSans(color: Colors.grey.shade600, fontSize: 13, fontWeight: FontWeight.bold), maxLines: 1, overflow: TextOverflow.ellipsis),
+                        ),
+                        const SizedBox(width: 12),
+                        Icon(Icons.access_time_filled, size: 14, color: Colors.grey.shade400),
+                        const SizedBox(width: 4),
+                        Text("${_fmt(item.startHour, item.startMinute)} - ${_fmt(item.endHour, item.endMinute)}", style: GoogleFonts.plusJakartaSans(color: Colors.grey.shade600, fontSize: 13, fontWeight: FontWeight.bold)),
+                      ],
                     ),
                   ],
                 ),
@@ -621,41 +741,46 @@ class _ClassTile extends StatelessWidget {
             // Attendance / Delete Buttons
             // Only show Attendance check if the class has passed or started
             if (_hasStarted(item))
-              Row(
-                mainAxisSize: MainAxisSize.min,
-                children: [
-                  IconButton(
-                    icon: Icon(Icons.check_circle, color: item.attended == true ? Colors.green : Colors.grey.shade300),
-                    onPressed: () => provider.toggleAttendance(item, true),
-                    tooltip: "Attended",
-                  ),
-                  IconButton(
-                    icon: Icon(Icons.cancel, color: item.attended == false ? Colors.red : Colors.grey.shade300),
-                    onPressed: () => provider.toggleAttendance(item, false),
-                    tooltip: "Missed",
-                  ),
-                ],
+              Container(
+                decoration: BoxDecoration(border: Border(left: BorderSide(color: Colors.grey.shade100))),
+                child: Column(
+                  mainAxisAlignment: MainAxisAlignment.center,
+                  children: [
+                    IconButton(
+                      icon: Icon(Icons.check_circle, size: 28, color: item.attended == true ? Colors.green : Colors.grey.shade200),
+                      onPressed: () => provider.toggleAttendance(item, true),
+                      tooltip: "Attended",
+                    ),
+                    IconButton(
+                      icon: Icon(Icons.cancel, size: 28, color: item.attended == false ? Colors.red : Colors.grey.shade200),
+                      onPressed: () => provider.toggleAttendance(item, false),
+                      tooltip: "Missed",
+                    ),
+                  ],
+                ),
               )
             else
-               IconButton(
-                 icon: const Icon(Icons.delete_outline, size: 20, color: Colors.grey),
-                 onPressed: () async {
-                   final messenger = ScaffoldMessenger.of(context);
-                   final res = await showDialog<bool>(context: context, builder: (ctx) => AlertDialog(
-                     title: const Text('Delete item'),
-                     content: const Text('Remove this item from timetable?'),
-                     actions: [
-                       TextButton(onPressed: () => Navigator.pop(ctx, false), child: const Text('Cancel')),
-                       FilledButton(onPressed: () => Navigator.pop(ctx, true), child: const Text('Delete')),
-                     ],
-                   ));
-                   if (res == true) {
-                     provider.deleteItem(item);
-                     messenger.showSnackBar(const SnackBar(content: Text('Item deleted')));
-                   }
-                 },
+               Container(
+                 padding: const EdgeInsets.symmetric(horizontal: 16),
+                 child: IconButton(
+                   icon: const Icon(Icons.delete_outline, size: 24, color: _red600),
+                   onPressed: () async {
+                     final messenger = ScaffoldMessenger.of(context);
+                     final res = await showDialog<bool>(context: context, builder: (ctx) => AlertDialog(
+                       title: const Text('Delete item'),
+                       content: const Text('Remove this item from timetable?'),
+                       actions: [
+                         TextButton(onPressed: () => Navigator.pop(ctx, false), child: const Text('Cancel')),
+                         FilledButton(onPressed: () => Navigator.pop(ctx, true), style: FilledButton.styleFrom(backgroundColor: _red600), child: const Text('Delete')),
+                       ],
+                     ));
+                     if (res == true) {
+                       provider.deleteItem(item);
+                       messenger.showSnackBar(const SnackBar(content: Text('Item deleted')));
+                     }
+                   },
+                 ),
                ),
-             const SizedBox(width: 4),
           ],
         ),
       ),
@@ -691,16 +816,14 @@ class _UpcomingTile extends StatelessWidget {
   Widget build(BuildContext context) {
     final start = _fmt(item.startHour, item.startMinute);
     return Container(
-      width: 160,
+      width: 150,
       height: 72,
       decoration: BoxDecoration(
-        color: Colors.white,
-        borderRadius: BorderRadius.circular(12),
-        border: Border.all(color: Colors.grey.shade200),
-        boxShadow: [BoxShadow(color: Colors.black.withValues(alpha: 0.03), blurRadius: 6, offset: const Offset(0, 2))],
+        color: Colors.grey.shade50,
+        borderRadius: BorderRadius.circular(24),
       ),
       child: Padding(
-        padding: const EdgeInsets.all(10),
+        padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           mainAxisAlignment: MainAxisAlignment.center,
@@ -708,13 +831,13 @@ class _UpcomingTile extends StatelessWidget {
             Row(
               children: [
                 Expanded(
-                  child: Text(item.title, style: const TextStyle(fontWeight: FontWeight.w600), maxLines: 1, overflow: TextOverflow.ellipsis),
+                  child: Text(item.title, style: GoogleFonts.plusJakartaSans(fontWeight: FontWeight.w900, fontSize: 14, color: Colors.grey.shade800), maxLines: 1, overflow: TextOverflow.ellipsis),
                 ),
-                if (item.type == 'exam') Padding(padding: const EdgeInsets.only(left: 4), child: Icon(Icons.warning_amber_rounded, color: Colors.red.shade400, size: 16)),
+                if (item.type == 'exam') Padding(padding: const EdgeInsets.only(left: 4), child: Icon(Icons.warning_amber_rounded, color: Colors.orange.shade400, size: 14)),
               ],
             ),
             const SizedBox(height: 4),
-            Text(start, style: TextStyle(color: Colors.grey.shade600, fontSize: 11), maxLines: 1, overflow: TextOverflow.ellipsis),
+            Text(start, style: GoogleFonts.plusJakartaSans(color: Colors.grey.shade500, fontSize: 11, fontWeight: FontWeight.bold), maxLines: 1, overflow: TextOverflow.ellipsis),
           ],
         ),
       ),
