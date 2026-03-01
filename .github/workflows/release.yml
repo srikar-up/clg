@@ -1,0 +1,59 @@
+name: Release Argon (v1.1-beta)
+
+on:
+  push:
+    tags:
+      - 'v*' # Trigger workflow on pushes that match v*, like v1.1-beta
+
+permissions:
+  contents: write
+
+jobs:
+  build:
+    name: Build & Release Android APK
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout Code
+        uses: actions/checkout@v4
+
+      - name: Setup Java
+        uses: actions/setup-java@v3
+        with:
+          distribution: 'zulu'
+          java-version: '17'
+
+      - name: Setup Flutter
+        uses: subosito/flutter-action@v2
+        with:
+          channel: 'stable'
+
+      - name: Install Dependencies
+        run: flutter pub get
+
+      - name: Build Android APK
+        run: flutter build apk --release
+
+      - name: Create GitHub Release
+        uses: softprops/action-gh-release@v2
+        with:
+          name: Argon - v1.1 Beta 🚀
+          draft: false
+          prerelease: true
+          body: |
+            ## Argon (v1.1 Beta) 🎉
+            **Welcome to the first official beta release of Student LifeOS!**
+            
+            This release focuses on heavily expanding the core aesthetics and logic of the Timetable section while fixing major layout bugs across multiple screens.
+            
+            ### ✨ Features Included:
+            - **Timetable Redesign**: Stunning new "Red Accent" aesthetics with pill tabs, smooth shadows, and a customized floating header.
+            - **Intelligent Timetable Logic**: Daily completion progress tracking and automated "Time until next class" live calculations.
+            - **Syllabus Enhancements**: Fixed pixel overflow bugs when checking exam results, added tap-to-edit logic on existing marks.
+            - **Safety Warnings**: Added warning confirmation dialogs before deleting Syllabus items or Subjects to prevent data loss.
+            - **Dashboard Interactivity**: The "Upcoming Classes" quick-action widget now correctly routes directly to the active Timetable tab.
+            - **Performance Fixes**: Solved multiple `RenderFlex` overflow errors on smaller devices and mobile screens.
+                        
+            ### 📦 Download
+            Install the attached `app-release.apk` directly onto your Android device to experience the Argon release!
+          files: build/app/outputs/flutter-apk/app-release.apk
+          token: ${{ secrets.GITHUB_TOKEN }}
