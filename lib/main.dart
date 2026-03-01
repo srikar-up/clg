@@ -13,6 +13,7 @@ import 'screens/timetable_screen.dart';
 import 'screens/life_os_screen.dart';
 import 'screens/expense_screen.dart'; // New
 import 'screens/syllabus_screen.dart'; // New
+import 'screens/dashboard_screen.dart';
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
@@ -71,6 +72,7 @@ class _MainDashboardState extends State<MainDashboard> {
   int _index = 0;
   
   final List<Widget> _screens = [
+    const DashboardScreen(),
     const TimetableScreen(),
     const LifeOsScreen(),
     const ExpenseScreen(), // Now connected
@@ -87,6 +89,7 @@ class _MainDashboardState extends State<MainDashboard> {
         onDestinationSelected: (i) => setState(() => _index = i),
         indicatorColor: Colors.red.shade600,
         destinations: const [
+          NavigationDestination(icon: Icon(Icons.analytics_outlined), selectedIcon: Icon(Icons.analytics), label: 'Status'),
           NavigationDestination(icon: Icon(Icons.calendar_month), label: 'Timetable'),
           NavigationDestination(icon: Icon(Icons.check_circle_outline), label: 'Life OS'),
           NavigationDestination(icon: Icon(Icons.attach_money), label: 'Expenses'),

@@ -47,8 +47,51 @@ class LifeProvider extends ChangeNotifier {
   List<LifeEvent> get events => _events;
   
   int get totalPoints => _total;
-  int get currentLevel => (_total / 100).floor() + 1;
-  double get levelProgress => (_total % 100) / 100;
+  int get currentLevel {
+    int lvl = 1;
+    double req = 100;
+    double startSum = 0;
+    double current = _total.toDouble();
+    while (current >= (startSum + req)) {
+      startSum += req;
+      lvl++;
+      req *= 1.5;
+    }
+    return lvl;
+  }
+
+  double get levelProgress {
+    double req = 100;
+    double startSum = 0;
+    double current = _total.toDouble();
+    while (current >= (startSum + req)) {
+      startSum += req;
+      req *= 1.5;
+    }
+    return (current - startSum) / req;
+  }
+
+  int get currentLevelProgressXp {
+    double req = 100;
+    double startSum = 0;
+    double current = _total.toDouble();
+    while (current >= (startSum + req)) {
+      startSum += req;
+      req *= 1.5;
+    }
+    return (current - startSum).toInt();
+  }
+
+  int get nextLevelXp {
+    double req = 100;
+    double startSum = 0;
+    double current = _total.toDouble();
+    while (current >= (startSum + req)) {
+      startSum += req;
+      req *= 1.5;
+    }
+    return req.toInt();
+  }
   
   int get totalQuestsCompleted => _quests.where((q) => q.isCompleted).length;
   double get successRate => _quests.isEmpty ? 0 : (totalQuestsCompleted / _quests.length) * 100;

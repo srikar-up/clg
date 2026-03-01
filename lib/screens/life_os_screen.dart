@@ -162,7 +162,7 @@ class _LifeOsScreenState extends State<LifeOsScreen> with SingleTickerProviderSt
                                         Text('Level ${provider.currentLevel + 1}', style: GoogleFonts.plusJakartaSans(fontSize: 24, fontWeight: FontWeight.w900, color: Colors.white)),
                                       ],
                                     ),
-                                    Text('${(provider.totalPoints % 100)} / 100 XP', style: GoogleFonts.plusJakartaSans(fontSize: 12, fontWeight: FontWeight.bold, color: Colors.white.withValues(alpha: 0.9))),
+                                    Text('${provider.currentLevelProgressXp} / ${provider.nextLevelXp} XP', style: GoogleFonts.plusJakartaSans(fontSize: 12, fontWeight: FontWeight.bold, color: Colors.white.withValues(alpha: 0.9))),
                                   ],
                                 ),
                                 const SizedBox(height: 16),
