@@ -24,10 +24,10 @@ class LifeProvider extends ChangeNotifier {
   Future<void> _init() async {
     // Open all Hive boxes
     _goalsBox = await Hive.openBox<LifeGoal>('life_goals');
-    _questsBox = await Hive.openBox<Quest>('life_quests');
-    _countersBox = await Hive.openBox<WorkCounter>('life_counters');
-    _notesBox = await Hive.openBox<Note>('life_notes');
-    _eventsBox = await Hive.openBox<LifeEvent>('life_events');
+    _questsBox = await Hive.openBox<Quest>('life_quests_v2');
+    _countersBox = await Hive.openBox<WorkCounter>('life_counters_v2');
+    _notesBox = await Hive.openBox<Note>('life_notes_v2');
+    _eventsBox = await Hive.openBox<LifeEvent>('life_events_v2');
     
     _goals = _goalsBox.values.toList();
     _quests = _questsBox.values.toList();
@@ -65,16 +65,18 @@ class LifeProvider extends ChangeNotifier {
     for (var quest in _quests) {
       if (quest.isCompleted) {
         _total += quest.xpReward;
+      } else if (quest.deadline != null && DateTime.now().isAfter(quest.deadline!)) {
+        _total -= quest.xpPenalty;
       }
     }
-    // From work counter increments (10 XP per increment)
+    // From work counter increments (custom XP per increment)
     for (var counter in _counters) {
-      _total += counter.count * 10;
+      _total += counter.count * counter.xpReward;
     }
   }
 
   // --- QUEST ACTIONS ---
-  void addQuest(String title, String rank, String type, int targetProgress, String? reward) {
+  void addQuest(String title, String rank, String type, int targetProgress, String? reward, {DateTime? deadline, int xpPenalty = 0}) {
     final newQuest = Quest(
       id: DateTime.now().millisecondsSinceEpoch.toString(),
       title: title,
@@ -82,6 +84,8 @@ class LifeProvider extends ChangeNotifier {
       type: type,
       targetProgress: targetProgress,
       reward: reward,
+      deadline: deadline,
+      xpPenalty: xpPenalty,
     );
     _questsBox.add(newQuest);
     _refresh();
@@ -103,10 +107,12 @@ class LifeProvider extends ChangeNotifier {
   }
 
   // --- WORK COUNTER ACTIONS ---
-  void addWorkCounter(String title) {
+  void addWorkCounter(String title, {int xpReward = 10, String iconData = 'bolt'}) {
     final newCounter = WorkCounter(
       id: DateTime.now().millisecondsSinceEpoch.toString(),
       title: title,
+      xpReward: xpReward,
+      iconData: iconData,
     );
     _countersBox.add(newCounter);
     _refresh();

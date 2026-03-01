@@ -96,6 +96,10 @@ class Quest extends HiveObject {
   DateTime createdAt;
   @HiveField(9)
   DateTime? completedAt;
+  @HiveField(10)
+  DateTime? deadline;
+  @HiveField(11)
+  int xpPenalty;
 
   int get xpReward {
     switch (rank) {
@@ -118,6 +122,8 @@ class Quest extends HiveObject {
     this.isCompleted = false,
     DateTime? createdAt,
     this.completedAt,
+    this.deadline,
+    this.xpPenalty = 0,
   }) : createdAt = createdAt ?? DateTime.now();
 }
 
@@ -132,12 +138,18 @@ class WorkCounter extends HiveObject {
   int count;
   @HiveField(3)
   DateTime createdAt;
+  @HiveField(4)
+  int xpReward;
+  @HiveField(5)
+  String iconData;
 
   WorkCounter({
     required this.id,
     required this.title,
     this.count = 0,
     DateTime? createdAt,
+    this.xpReward = 10,
+    this.iconData = 'bolt',
   }) : createdAt = createdAt ?? DateTime.now();
 }
 
@@ -307,6 +319,8 @@ class QuestAdapter extends TypeAdapter<Quest> {
       isCompleted: reader.readBool(),
       createdAt: DateTime.fromMillisecondsSinceEpoch(reader.readInt()),
       completedAt: reader.readBool() ? DateTime.fromMillisecondsSinceEpoch(reader.readInt()) : null,
+      deadline: reader.readBool() ? DateTime.fromMillisecondsSinceEpoch(reader.readInt()) : null,
+      xpPenalty: reader.readInt(),
     );
   }
   @override
@@ -324,6 +338,11 @@ class QuestAdapter extends TypeAdapter<Quest> {
     if (obj.completedAt != null) {
       writer.writeInt(obj.completedAt!.millisecondsSinceEpoch);
     }
+    writer.writeBool(obj.deadline != null);
+    if (obj.deadline != null) {
+      writer.writeInt(obj.deadline!.millisecondsSinceEpoch);
+    }
+    writer.writeInt(obj.xpPenalty);
   }
 }
 
@@ -337,6 +356,8 @@ class WorkCounterAdapter extends TypeAdapter<WorkCounter> {
       title: reader.readString(),
       count: reader.readInt(),
       createdAt: DateTime.fromMillisecondsSinceEpoch(reader.readInt()),
+      xpReward: reader.readInt(),
+      iconData: reader.readString(),
     );
   }
   @override
@@ -345,6 +366,8 @@ class WorkCounterAdapter extends TypeAdapter<WorkCounter> {
     writer.writeString(obj.title);
     writer.writeInt(obj.count);
     writer.writeInt(obj.createdAt.millisecondsSinceEpoch);
+    writer.writeInt(obj.xpReward);
+    writer.writeString(obj.iconData);
   }
 }
 

@@ -298,10 +298,7 @@ class _DayScheduleViewState extends State<_DayScheduleView> {
                       // NOW card (left)
                       ConstrainedBox(
                         constraints: BoxConstraints(maxWidth: constraints.maxWidth * 0.48),
-                        child: AnimatedSwitcher(
-                          duration: const Duration(milliseconds: 300),
-                          child: _StatusCard(key: ValueKey(status?['current']?.id ?? 'now'), title: 'NOW', item: status?['current'], isActive: true),
-                        ),
+                        child: _StatusCard(key: ValueKey(status?['current']?.id ?? 'now'), title: 'NOW', item: status?['current'], isActive: true),
                       ),
                       const SizedBox(width: 12),
 
@@ -313,7 +310,7 @@ class _DayScheduleViewState extends State<_DayScheduleView> {
                             color: Colors.white,
                             borderRadius: BorderRadius.circular(12),
                             border: Border.all(color: Colors.grey.shade200),
-                            boxShadow: [BoxShadow(color: Colors.black.withOpacity(0.03), blurRadius: 10, offset: const Offset(0, 2))],
+                            boxShadow: [BoxShadow(color: Colors.black.withValues(alpha: 0.03), blurRadius: 10, offset: const Offset(0, 2))],
                           ),
                           child: Column(
                             crossAxisAlignment: CrossAxisAlignment.start,
@@ -444,11 +441,7 @@ class _DayScheduleViewState extends State<_DayScheduleView> {
                            ),
                          )
                       else
-                        for (var item in items) AnimatedSwitcher(
-                              duration: const Duration(milliseconds: 350),
-                              transitionBuilder: (child, anim) => FadeTransition(opacity: anim, child: SizeTransition(sizeFactor: anim, axisAlignment: 0.0, child: child)),
-                              child: _ClassTile(key: ValueKey(item.id), item: item, provider: provider),
-                            ),
+                        for (var item in items) _ClassTile(key: ValueKey(item.id), item: item, provider: provider),
                       
                       // Extra padding at bottom for FAB
                       const SizedBox(height: 80), 
@@ -483,11 +476,7 @@ class _DayScheduleViewState extends State<_DayScheduleView> {
                      ),
                    )
                 else
-                  for (var item in items) AnimatedSwitcher(
-                        duration: const Duration(milliseconds: 350),
-                        transitionBuilder: (child, anim) => FadeTransition(opacity: anim, child: SizeTransition(sizeFactor: anim, axisAlignment: 0.0, child: child)),
-                        child: _ClassTile(key: ValueKey(item.id), item: item, provider: provider),
-                      ),
+                  for (var item in items) _ClassTile(key: ValueKey(item.id), item: item, provider: provider),
                 
                 // Extra padding at bottom for FAB
                 const SizedBox(height: 80), 
@@ -505,7 +494,7 @@ class _StatusCard extends StatelessWidget {
   final ScheduleItem? item;
   final bool isActive;
 
-  const _StatusCard({Key? key, required this.title, required this.item, required this.isActive}) : super(key: key);
+  const _StatusCard({super.key, required this.title, required this.item, required this.isActive});
 
   @override
   Widget build(BuildContext context) {
@@ -517,7 +506,7 @@ class _StatusCard extends StatelessWidget {
       decoration: BoxDecoration(
         color: bgColor,
         borderRadius: BorderRadius.circular(12),
-        boxShadow: isActive ? [BoxShadow(color: bgColor.withOpacity(0.18), blurRadius: 10, offset: const Offset(0, 6))] : [BoxShadow(color: Colors.black.withOpacity(0.03), blurRadius: 6, offset: const Offset(0, 2))],
+        boxShadow: isActive ? [BoxShadow(color: bgColor.withValues(alpha: 0.18), blurRadius: 10, offset: const Offset(0, 6))] : [BoxShadow(color: Colors.black.withValues(alpha: 0.03), blurRadius: 6, offset: const Offset(0, 2))],
         border: isActive ? null : Border.all(color: Colors.grey.shade200),
       ),
       child: Column(
@@ -525,7 +514,7 @@ class _StatusCard extends StatelessWidget {
         children: [
           Padding(
             padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
-            child: Text(title, style: TextStyle(color: txtColor.withOpacity(0.95), fontSize: 12, fontWeight: FontWeight.bold, letterSpacing: 0.6)),
+            child: Text(title, style: TextStyle(color: txtColor.withValues(alpha: 0.95), fontSize: 12, fontWeight: FontWeight.bold, letterSpacing: 0.6)),
           ),
           Expanded(
             child: Padding(
@@ -533,9 +522,7 @@ class _StatusCard extends StatelessWidget {
               child: Row(crossAxisAlignment: CrossAxisAlignment.center, children: [
                 Expanded(
                   child: Column(crossAxisAlignment: CrossAxisAlignment.start, mainAxisAlignment: MainAxisAlignment.center, children: [
-                    AnimatedSwitcher(
-                      duration: const Duration(milliseconds: 300),
-                      child: item == null
+                    item == null
                           ? Text(isActive ? "Free Time" : "Nothing later", key: const ValueKey('empty'), style: TextStyle(color: txtColor, fontSize: 14, fontWeight: FontWeight.w600))
                           : Column(
                               key: ValueKey(item!.id),
@@ -550,15 +537,14 @@ class _StatusCard extends StatelessWidget {
                                 const SizedBox(height: 4),
                                 Text(
                                   "${item!.location} • ${_fmt(item!.startHour, item!.startMinute)}",
-                                  style: TextStyle(color: txtColor.withOpacity(0.9), fontSize: 12),
+                                  style: TextStyle(color: txtColor.withValues(alpha: 0.9), fontSize: 12),
                                 ),
                               ],
                             ),
-                    ),
                   ]),
                 ),
                 if (isActive) const SizedBox(width: 8),
-                if (isActive) Icon(Icons.circle, size: 12, color: Colors.white.withOpacity(0.9)),
+                if (isActive) Icon(Icons.circle, size: 12, color: Colors.white.withValues(alpha: 0.9)),
               ]),
             ),
           ),
@@ -574,7 +560,7 @@ class _ClassTile extends StatelessWidget {
   final ScheduleItem item;
   final TimetableProvider provider;
 
-  const _ClassTile({Key? key, required this.item, required this.provider}) : super(key: key);
+  const _ClassTile({super.key, required this.item, required this.provider});
 
   @override
   Widget build(BuildContext context) {
@@ -588,7 +574,7 @@ class _ClassTile extends StatelessWidget {
         color: isExam ? Colors.red.shade50 : Colors.white,
         borderRadius: BorderRadius.circular(12),
         border: isExam ? Border.all(color: Colors.red.shade200) : null,
-        boxShadow: [BoxShadow(color: Colors.black.withOpacity(0.03), blurRadius: 8, offset: const Offset(0, 2))],
+        boxShadow: [BoxShadow(color: Colors.black.withValues(alpha: 0.03), blurRadius: 8, offset: const Offset(0, 2))],
       ),
       child: IntrinsicHeight(
         child: Row(
@@ -699,7 +685,7 @@ class _UpcomingTile extends StatelessWidget {
   final ScheduleItem item;
   final TimetableProvider provider;
 
-  const _UpcomingTile({Key? key, required this.item, required this.provider}) : super(key: key);
+  const _UpcomingTile({required this.item, required this.provider});
 
   @override
   Widget build(BuildContext context) {
@@ -711,7 +697,7 @@ class _UpcomingTile extends StatelessWidget {
         color: Colors.white,
         borderRadius: BorderRadius.circular(12),
         border: Border.all(color: Colors.grey.shade200),
-        boxShadow: [BoxShadow(color: Colors.black.withOpacity(0.03), blurRadius: 6, offset: const Offset(0, 2))],
+        boxShadow: [BoxShadow(color: Colors.black.withValues(alpha: 0.03), blurRadius: 6, offset: const Offset(0, 2))],
       ),
       child: Padding(
         padding: const EdgeInsets.all(10),
@@ -728,7 +714,7 @@ class _UpcomingTile extends StatelessWidget {
               ],
             ),
             const SizedBox(height: 4),
-            Text('$start', style: TextStyle(color: Colors.grey.shade600, fontSize: 11), maxLines: 1, overflow: TextOverflow.ellipsis),
+            Text(start, style: TextStyle(color: Colors.grey.shade600, fontSize: 11), maxLines: 1, overflow: TextOverflow.ellipsis),
           ],
         ),
       ),

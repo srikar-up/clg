@@ -85,7 +85,7 @@ class TimetableProvider extends ChangeNotifier {
       if (nowMin >= startMin && nowMin < endMin) {
         current = item;
       } else if (nowMin < startMin) {
-        if (next == null) next = item;
+        next ??= item;
       }
     }
     return {'current': current, 'next': next};

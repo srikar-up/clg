@@ -22,8 +22,15 @@ void main() async {
   Hive.registerAdapter(ScheduleItemAdapter());
   Hive.registerAdapter(LifeGoalAdapter());
   Hive.registerAdapter(ExpenseAdapter());
-  Hive.registerAdapter(SyllabusItemAdapter()); // Register Syllabus
-
+  Hive.registerAdapter(QuestAdapter());
+  Hive.registerAdapter(WorkCounterAdapter());
+  Hive.registerAdapter(NoteAdapter());
+  Hive.registerAdapter(LifeEventAdapter());
+  Hive.registerAdapter(SyllabusSubjectAdapter());
+  Hive.registerAdapter(SyllabusUnitAdapter());
+  Hive.registerAdapter(SyllabusTopicAdapter());
+  Hive.registerAdapter(SyllabusExamAdapter());
+  Hive.registerAdapter(WeightageGroupAdapter());
   runApp(const StudentLifeOS());
 }
 

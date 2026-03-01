@@ -1,0 +1,31 @@
+Resolving dependencies...
+Downloading packages...
+  intl 0.19.0 (0.20.2 available)
+  meta 1.17.0 (1.18.1 available)
+Got dependencies!
+2 packages have newer versions incompatible with dependency constraints.
+Try `flutter pub outdated` for more information.
+Analyzing clg...                                                
+
+warning • The value of the field '_isInitialized' isn't used • lib/logic/expense_provider.dart:10:8 • unused_field
+   info • The 'if' statement could be replaced by a null-aware assignment • lib/logic/timetable_provider.dart:88:9 • prefer_conditional_assignment
+warning • Unused import: '../data/models.dart' • lib/screens/expense_screen.dart:5:8 • unused_import
+   info • 'withOpacity' is deprecated and shouldn't be used. Use .withValues() to avoid precision loss • lib/screens/expense_screen.dart:135:46 • deprecated_member_use
+   info • 'value' is deprecated and shouldn't be used. Use initialValue instead. This will set the initial value for the form field. This feature was deprecated after v3.33.0-1.0.pre • lib/screens/life_os_screen.dart:316:21 • deprecated_member_use
+   info • 'value' is deprecated and shouldn't be used. Use initialValue instead. This will set the initial value for the form field. This feature was deprecated after v3.33.0-1.0.pre • lib/screens/life_os_screen.dart:518:23 • deprecated_member_use
+   info • 'MaterialStateProperty' is deprecated and shouldn't be used. Use WidgetStateProperty instead. Moved to the Widgets layer to make code available outside of Material. This feature was deprecated after v3.19.0-0.3.pre • lib/screens/life_os_screen.dart:594:30 • deprecated_member_use
+   info • 'withOpacity' is deprecated and shouldn't be used. Use .withValues() to avoid precision loss • lib/screens/life_os_screen.dart:781:33 • deprecated_member_use
+   info • 'withOpacity' is deprecated and shouldn't be used. Use .withValues() to avoid precision loss • lib/screens/life_os_screen.dart:908:52 • deprecated_member_use
+   info • 'withOpacity' is deprecated and shouldn't be used. Use .withValues() to avoid precision loss • lib/screens/timetable_screen.dart:316:71 • deprecated_member_use
+   info • Parameter 'key' could be a super parameter • lib/screens/timetable_screen.dart:508:9 • use_super_parameters
+   info • 'withOpacity' is deprecated and shouldn't be used. Use .withValues() to avoid precision loss • lib/screens/timetable_screen.dart:520:57 • deprecated_member_use
+   info • 'withOpacity' is deprecated and shouldn't be used. Use .withValues() to avoid precision loss • lib/screens/timetable_screen.dart:520:154 • deprecated_member_use
+   info • 'withOpacity' is deprecated and shouldn't be used. Use .withValues() to avoid precision loss • lib/screens/timetable_screen.dart:528:65 • deprecated_member_use
+   info • 'withOpacity' is deprecated and shouldn't be used. Use .withValues() to avoid precision loss • lib/screens/timetable_screen.dart:553:68 • deprecated_member_use
+   info • 'withOpacity' is deprecated and shouldn't be used. Use .withValues() to avoid precision loss • lib/screens/timetable_screen.dart:561:80 • deprecated_member_use
+   info • Parameter 'key' could be a super parameter • lib/screens/timetable_screen.dart:577:9 • use_super_parameters
+   info • 'withOpacity' is deprecated and shouldn't be used. Use .withValues() to avoid precision loss • lib/screens/timetable_screen.dart:591:51 • deprecated_member_use
+   info • Parameter 'key' could be a super parameter • lib/screens/timetable_screen.dart:702:9 • use_super_parameters
+   info • 'withOpacity' is deprecated and shouldn't be used. Use .withValues() to avoid precision loss • lib/screens/timetable_screen.dart:714:51 • deprecated_member_use
+   info • Unnecessary use of string interpolation • lib/screens/timetable_screen.dart:731:18 • unnecessary_string_interpolations
+

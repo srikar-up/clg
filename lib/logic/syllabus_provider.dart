@@ -1,81 +1,253 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:hive_flutter/hive_flutter.dart';
+import 'dart:convert';
 import '../data/syllabus_model.dart';
-import 'dart:convert'; // For AI import
 
 class SyllabusProvider extends ChangeNotifier {
-  late Box<SyllabusItem> _box;
-  List<SyllabusItem> _items = [];
+  late Box<SyllabusSubject> _box;
+  late Box<String> _semBox;
+  List<SyllabusSubject> _items = [];
+  int _activeSemester = 1;
+  bool _isInit = false;
 
   SyllabusProvider() {
     _init();
   }
 
+  int get activeSemester => _activeSemester;
+
   Future<void> _init() async {
-    _box = await Hive.openBox<SyllabusItem>('syllabus');
-    _items = _box.values.toList();
-    notifyListeners();
-  }
-
-  List<SyllabusItem> get items => _items;
-
-  // --- ACTIONS ---
-
-  void addItem({required String name, required String code, DateTime? date}) {
-    final item = SyllabusItem(subjectName: name, code: code, examDate: date);
-    _box.add(item);
+    _box = await Hive.openBox<SyllabusSubject>('syllabus_subjects_v1');
+    _semBox = await Hive.openBox<String>('syllabus_semesters_v1');
+    _isInit = true;
     _refresh();
   }
 
-  void updateProgress(SyllabusItem item, double newVal) {
-    item.progress = newVal;
-    item.save();
+  List<SyllabusSubject> get subjects => _items.where((s) => s.semester == _activeSemester).toList();
+
+  void setActiveSemester(int sem) {
+    _activeSemester = sem;
     notifyListeners();
   }
 
-  void updateMarks(SyllabusItem item, double marks, double total) {
-    item.marksObtained = marks;
-    item.totalMarks = total;
-    item.save();
+  List<Map<String, dynamic>> get semesters {
+    Set<int> activeIds = {1}; // Default at least 1 semester
+    
+    // Add all semesters that have subjects
+    for(var s in _items) activeIds.add(s.semester);
+    
+    if (_isInit) {
+      // Add all explicitly created semesters
+      for(var key in _semBox.keys) {
+        if (key is int) activeIds.add(key);
+      }
+    }
+    
+    List<int> sortedIds = activeIds.toList()..sort();
+    return sortedIds.map<Map<String, dynamic>>((id) {
+       return <String, dynamic>{
+         'id': id,
+         'name': _isInit ? (_semBox.get(id) ?? 'SEMESTER $id') : 'SEMESTER $id',
+       };
+    }).toList();
+  }
+
+  String get activeSemesterName {
+    if (!_isInit) return 'SEMESTER $_activeSemester';
+    return _semBox.get(_activeSemester) ?? 'SEMESTER $_activeSemester';
+  }
+
+  void addSemester(String name) {
+    int maxId = 0;
+    for(var s in semesters) {
+      final sId = s['id'] as int;
+      if (sId > maxId) maxId = sId;
+    }
+    int nextId = maxId + 1;
+    _semBox.put(nextId, name);
+    _activeSemester = nextId;
     notifyListeners();
   }
 
-  void deleteItem(SyllabusItem item) {
-    item.delete();
-    _refresh();
+  void renameSemester(int id, String newName) {
+    _semBox.put(id, newName);
+    notifyListeners();
   }
 
   void _refresh() {
     _items = _box.values.toList();
-    // Sort: Exam dates soonest first
-    _items.sort((a, b) {
-      if (a.examDate == null) return 1;
-      if (b.examDate == null) return -1;
-      return a.examDate!.compareTo(b.examDate!);
-    });
     notifyListeners();
   }
 
-  // --- AI IMPORT ---
+  void addSubject({required String name, required String code, required int credits, required int semester}) {
+    final sub = SyllabusSubject(code: code, name: name, credits: credits, semester: semester);
+    _box.add(sub);
+    _refresh();
+  }
+
+  void deleteSubject(SyllabusSubject sub) {
+    sub.delete();
+    _refresh();
+  }
+
+  void toggleTopic(SyllabusSubject subject, SyllabusTopic topic) {
+    HapticFeedback.lightImpact();
+    topic.isCompleted = !topic.isCompleted;
+    subject.save();
+    notifyListeners();
+  }
+
+  void addExam(SyllabusSubject subject, String name, DateTime date, double maxMarks, Map<String, List<String>> scope) {
+    subject.exams.add(
+      SyllabusExam(
+        id: DateTime.now().millisecondsSinceEpoch.toString(),
+        name: name,
+        date: date,
+        maxMarks: maxMarks,
+        scope: scope,
+      )
+    );
+    subject.save();
+    notifyListeners();
+  }
+
+  void deleteExam(SyllabusSubject subject, SyllabusExam exam) {
+    subject.exams.remove(exam);
+    subject.save();
+    notifyListeners();
+  }
+
+  void updateExamMarks(SyllabusSubject subject, SyllabusExam exam, double marksObtained) {
+    exam.marksObtained = marksObtained;
+    subject.save();
+    notifyListeners();
+  }
+
+  void addWeightageGroup(SyllabusSubject subject, String name, double percentage) {
+    subject.weightageGroups.add(
+      WeightageGroup(
+        id: DateTime.now().millisecondsSinceEpoch.toString(),
+        name: name,
+        percentage: percentage,
+      )
+    );
+    subject.save();
+    notifyListeners();
+  }
+
+  void deleteWeightageGroup(SyllabusSubject subject, WeightageGroup group) {
+    subject.weightageGroups.remove(group);
+    for (var ex in subject.exams) {
+      if (ex.weightageGroupId == group.id) ex.weightageGroupId = null;
+    }
+    subject.save();
+    notifyListeners();
+  }
+
+  void assignExamToGroup(SyllabusSubject subject, SyllabusExam exam, String? groupId) {
+    exam.weightageGroupId = groupId;
+    subject.save();
+    notifyListeners();
+  }
+
+  double predictSGPA() {
+    double totalCredits = 0;
+    double totalPoints = 0;
+
+    for (var subject in subjects) {
+      if (subject.credits <= 0) continue;
+
+      double subjectPercentage = 0;
+      double configuredWeightage = 0;
+
+      for (var group in subject.weightageGroups) {
+        final groupExams = subject.exams.where((e) => e.weightageGroupId == group.id).toList();
+        if (groupExams.isEmpty) continue;
+
+        double scored = 0;
+        double max = 0;
+        for (var e in groupExams) {
+          if (e.marksObtained != null) {
+            scored += e.marksObtained!;
+            max += e.maxMarks;
+          }
+        }
+        if (max > 0) {
+          subjectPercentage += (scored / max) * group.percentage;
+        }
+        configuredWeightage += group.percentage;
+      }
+
+      double finalPercentage = 0;
+      if (configuredWeightage > 0) {
+        finalPercentage = (subjectPercentage / configuredWeightage) * 100;
+      } else {
+        finalPercentage = subject.masterProgress * 100;
+      }
+
+      double gp = 0;
+      if (finalPercentage >= 90) {
+        gp = 10;
+      } else if (finalPercentage >= 80) {
+        gp = 9;
+      } else if (finalPercentage >= 70) {
+        gp = 8;
+      } else if (finalPercentage >= 60) {
+        gp = 7;
+      } else if (finalPercentage >= 50) {
+        gp = 6;
+      } else if (finalPercentage >= 40) {
+        gp = 5;
+      } else {
+        gp = 0;
+      }
+
+      totalPoints += (gp * subject.credits);
+      totalCredits += subject.credits;
+    }
+
+    if (totalCredits == 0) return 0.0;
+    return totalPoints / totalCredits;
+  }
+
   String importJson(String jsonStr) {
     try {
-      final List<dynamic> list = jsonDecode(jsonStr);
-      int count = 0;
-      for (var obj in list) {
-        String name = obj['subject'] ?? 'Unknown';
-        String code = obj['code'] ?? '';
-        DateTime? date;
-        if (obj['examDate'] != null) {
-          date = DateTime.tryParse(obj['examDate']);
-        }
+      final obj = jsonDecode(jsonStr);
+      List<dynamic> list = obj is List ? obj : [obj];
 
-        _box.add(SyllabusItem(subjectName: name, code: code, examDate: date));
+      int count = 0;
+      for (var s in list) {
+        List<SyllabusUnit> parsedUnits = [];
+        if (s['units'] != null) {
+          for (var u in s['units']) {
+            List<SyllabusTopic> parsedTopics = [];
+            if (u['topics'] != null) {
+              for (var t in u['topics']) {
+                parsedTopics.add(SyllabusTopic(name: t.toString()));
+              }
+            }
+            parsedUnits.add(SyllabusUnit(
+              id: (u['id'] as num?)?.toInt() ?? parsedUnits.length + 1,
+              title: u['title'] ?? 'Unit',
+              topics: parsedTopics,
+            ));
+          }
+        }
+        final sub = SyllabusSubject(
+          code: s['code']?.toString() ?? 'SUBJ',
+          name: s['name']?.toString() ?? 'Subject',
+          credits: (s['credits'] as num?)?.toInt() ?? 4,
+          semester: _activeSemester,
+          units: parsedUnits,
+        );
+        _box.add(sub);
         count++;
       }
       _refresh();
       return "Imported $count subjects!";
     } catch (e) {
-      return "Error parsing JSON.";
+      return "Error parsing JSON: $e";
     }
   }
 }
