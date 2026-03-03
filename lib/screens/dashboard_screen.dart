@@ -8,12 +8,8 @@ import '../logic/life_provider.dart';
 import '../logic/expense_provider.dart';
 import '../logic/timetable_provider.dart';
 import '../logic/syllabus_provider.dart';
+import '../logic/theme_provider.dart';
 
-const _bgPrimary = Color(0xFFFEF2F2);
-const _textDark = Color(0xFF1F2937);
-const _gradStart = Color(0xFFEF4444);
-const _gradEnd = Color(0xFF991B1B);
-const _red600 = Color(0xFFDC2626);
 const _green = Color(0xFF10B981);
 const _purple = Color(0xFF8B5CF6);
 const _orange = Color(0xFFF97316);
@@ -30,6 +26,8 @@ class DashboardScreen extends StatelessWidget {
     final expProv = context.watch<ExpenseProvider>();
     final timeProv = context.watch<TimetableProvider>();
     final sylProv = context.watch<SyllabusProvider>();
+    final themeProv = context.watch<ThemeProvider>();
+    final config = themeProv.config;
 
     final currencyFmt = NumberFormat.currency(locale: 'en_IN', symbol: '₹', decimalDigits: 0);
 
@@ -69,20 +67,20 @@ class DashboardScreen extends StatelessWidget {
         x: 5 - i,
         barRods: [
           BarChartRodData(toY: inflow, color: _green, width: 8, borderRadius: BorderRadius.circular(2)),
-          BarChartRodData(toY: outflow, color: _red600, width: 8, borderRadius: BorderRadius.circular(2)),
+          BarChartRodData(toY: outflow, color: config.primaryAccent, width: 8, borderRadius: BorderRadius.circular(2)),
         ],
       ));
       monthLabels.add(DateFormat('MMM').format(monthDate));
     }
 
     return Scaffold(
-      backgroundColor: _bgPrimary,
+      backgroundColor: config.bgPrimary,
       body: SafeArea(
         child: Column(
           children: [
             // HEADER
             Container(
-              color: Colors.white,
+              color: config.cardColor,
               padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 20),
               child: Row(
                 mainAxisAlignment: MainAxisAlignment.spaceBetween,
@@ -90,18 +88,40 @@ class DashboardScreen extends StatelessWidget {
                    Column(
                      crossAxisAlignment: CrossAxisAlignment.start,
                      children: [
-                       Text('Command Center', style: GoogleFonts.plusJakartaSans(fontSize: 24, fontWeight: FontWeight.w900, color: _textDark, height: 1)),
+                       Text('Command Center', style: GoogleFonts.plusJakartaSans(fontSize: 24, fontWeight: FontWeight.w900, color: config.textMain, height: 1)),
                        const SizedBox(height: 4),
-                       Text('STATISTICS SUITE', style: GoogleFonts.plusJakartaSans(fontSize: 10, fontWeight: FontWeight.w900, color: _red600, letterSpacing: 1.5)),
+                       Text('STATISTICS SUITE', style: GoogleFonts.plusJakartaSans(fontSize: 10, fontWeight: FontWeight.w900, color: config.primaryAccent, letterSpacing: 1.5)),
                      ],
                    ),
-                   Container(
-                     padding: const EdgeInsets.all(12),
-                     decoration: BoxDecoration(
-                       color: Colors.red.shade50,
-                       borderRadius: BorderRadius.circular(16)
-                     ),
-                     child: const Icon(Icons.analytics, color: _red600, size: 24),
+                   Row(
+                     children: [
+                       Container(
+                         padding: const EdgeInsets.all(12),
+                         decoration: BoxDecoration(
+                           color: config.softBg,
+                           borderRadius: BorderRadius.circular(16)
+                         ),
+                         child: Icon(Icons.analytics, color: config.primaryAccent, size: 24),
+                       ),
+                       const SizedBox(width: 8),
+                       GestureDetector(
+                         onTap: () {
+                           showModalBottomSheet(
+                             context: context,
+                             backgroundColor: config.cardColor,
+                             builder: (context) => _buildThemeSelector(context, themeProv, config),
+                           );
+                         },
+                         child: Container(
+                           padding: const EdgeInsets.all(12),
+                           decoration: BoxDecoration(
+                             color: config.softBg,
+                             borderRadius: BorderRadius.circular(16)
+                           ),
+                           child: Icon(Icons.settings, color: config.primaryAccent, size: 24),
+                         ),
+                       ),
+                     ],
                    ),
                 ],
               ),
@@ -117,9 +137,9 @@ class DashboardScreen extends StatelessWidget {
                   Container(
                     padding: const EdgeInsets.all(28),
                     decoration: BoxDecoration(
-                      gradient: const LinearGradient(colors: [_gradStart, _gradEnd], begin: Alignment.topLeft, end: Alignment.bottomRight),
+                      gradient: LinearGradient(colors: [config.gradStart, config.gradEnd], begin: Alignment.topLeft, end: Alignment.bottomRight),
                       borderRadius: BorderRadius.circular(40),
-                      boxShadow: const [BoxShadow(color: Color.fromRGBO(220, 38, 38, 0.3), blurRadius: 30, spreadRadius: -10, offset: Offset(0, 15))],
+                      boxShadow: [BoxShadow(color: config.gradStart.withValues(alpha: 0.3), blurRadius: 30, spreadRadius: -10, offset: const Offset(0, 15))],
                     ),
                     child: Column(
                       crossAxisAlignment: CrossAxisAlignment.start,
@@ -127,8 +147,8 @@ class DashboardScreen extends StatelessWidget {
                          Row(
                            mainAxisAlignment: MainAxisAlignment.spaceBetween,
                            children: [
-                             Text('LIFE OS RANK', style: GoogleFonts.plusJakartaSans(fontSize: 10, fontWeight: FontWeight.w900, color: Colors.red.shade200, letterSpacing: 1.5)),
-                             Icon(Icons.stars, color: Colors.red.shade200, size: 16),
+                             Text('LIFE OS RANK', style: GoogleFonts.plusJakartaSans(fontSize: 10, fontWeight: FontWeight.w900, color: Colors.white.withValues(alpha: 0.7), letterSpacing: 1.5)),
+                             Icon(Icons.stars, color: Colors.white.withValues(alpha: 0.7), size: 16),
                            ],
                          ),
                          const SizedBox(height: 12),
@@ -157,7 +177,7 @@ class DashboardScreen extends StatelessWidget {
                            ),
                          ),
                          const SizedBox(height: 8),
-                         Text('${lifeProv.currentLevelProgressXp} / ${lifeProv.nextLevelXp} XP to Next Level', style: GoogleFonts.plusJakartaSans(fontSize: 10, fontWeight: FontWeight.w900, color: Colors.red.shade100, letterSpacing: 1)),
+                         Text('${lifeProv.currentLevelProgressXp} / ${lifeProv.nextLevelXp} XP to Next Level', style: GoogleFonts.plusJakartaSans(fontSize: 10, fontWeight: FontWeight.w900, color: Colors.white.withValues(alpha: 0.7), letterSpacing: 1)),
                       ],
                     ),
                   ),
@@ -177,6 +197,7 @@ class DashboardScreen extends StatelessWidget {
                            subtitle: 'Wallet Balance',
                            icon: Icons.account_balance_wallet,
                            color: _green,
+                           config: config,
                         ),
                         const SizedBox(width: 16),
                         _buildInfoCard(
@@ -185,6 +206,7 @@ class DashboardScreen extends StatelessWidget {
                            subtitle: '${lifeProv.totalQuestsCompleted} Completed',
                            icon: Icons.shield,
                            color: _orange,
+                           config: config,
                         ),
                         const SizedBox(width: 16),
                         _buildInfoCard(
@@ -193,6 +215,7 @@ class DashboardScreen extends StatelessWidget {
                            subtitle: 'Scheduled items',
                            icon: Icons.calendar_today,
                            color: _blue,
+                           config: config,
                         ),
                       ],
                     ),
@@ -206,10 +229,10 @@ class DashboardScreen extends StatelessWidget {
                   Container(
                     padding: const EdgeInsets.all(24),
                     decoration: BoxDecoration(
-                      color: Colors.white,
+                      color: config.cardColor,
                       borderRadius: BorderRadius.circular(32),
-                      boxShadow: const [BoxShadow(color: Color.fromRGBO(0,0,0,0.03), blurRadius: 10, offset: Offset(0, 4))],
-                      border: Border.all(color: Colors.grey.shade100)
+                      boxShadow: [BoxShadow(color: Color.fromRGBO(0,0,0,0.03), blurRadius: 10, offset: Offset(0, 4))],
+                      border: Border.all(color: config.textMain.withValues(alpha: 0.05))
                     ),
                     child: Column(
                       children: [
@@ -226,7 +249,7 @@ class DashboardScreen extends StatelessWidget {
                             Container(
                               width: 56, height: 56,
                               decoration: BoxDecoration(color: _purple.withValues(alpha:0.1), borderRadius: BorderRadius.circular(16)),
-                              child: const Icon(Icons.school, color: _purple, size: 28),
+                              child: Icon(Icons.school, color: _purple, size: 28),
                             )
                           ],
                         ),
@@ -311,10 +334,10 @@ class DashboardScreen extends StatelessWidget {
                   Container(
                     padding: const EdgeInsets.all(24),
                     decoration: BoxDecoration(
-                      color: Colors.white,
+                      color: config.cardColor,
                       borderRadius: BorderRadius.circular(32),
-                      boxShadow: const [BoxShadow(color: Color.fromRGBO(0,0,0,0.03), blurRadius: 10, offset: Offset(0, 4))],
-                      border: Border.all(color: Colors.grey.shade100)
+                      boxShadow: [BoxShadow(color: Color.fromRGBO(0,0,0,0.03), blurRadius: 10, offset: Offset(0, 4))],
+                      border: Border.all(color: config.textMain.withValues(alpha: 0.05))
                     ),
                     child: Column(
                       children: [
@@ -366,24 +389,24 @@ class DashboardScreen extends StatelessWidget {
                             children: [
                               _buildChartLegend(color: _green, label: 'Inflow'),
                               const SizedBox(width: 16),
-                              _buildChartLegend(color: _red600, label: 'Outflow'),
+                              _buildChartLegend(color: config.primaryAccent, label: 'Outflow'),
                             ],
                           ),
                           const SizedBox(height: 24),
                         ],
                         Row(
                           children: [
-                            Expanded(child: _buildFinanceCard('Earned', expProv.totalIncome, _green)),
+                            Expanded(child: _buildFinanceCard('Earned', expProv.totalIncome, _green, config)),
                             const SizedBox(width: 16),
-                            Expanded(child: _buildFinanceCard('Spent', expProv.totalExpense, _red600)),
+                            Expanded(child: _buildFinanceCard('Spent', expProv.totalExpense, config.primaryAccent, config)),
                           ],
                         ),
                         const SizedBox(height: 16),
                         Row(
                           children: [
-                            Expanded(child: _buildFinanceCard('Investing', expProv.totalInvestment, _purple, subtitle: '${expProv.investRate.toStringAsFixed(1)}% Rate')),
+                            Expanded(child: _buildFinanceCard('Investing', expProv.totalInvestment, _purple, config, subtitle: '${expProv.investRate.toStringAsFixed(1)}% Rate')),
                             const SizedBox(width: 16),
-                            Expanded(child: _buildFinanceCard('Debt', expProv.outstandingDebt, _orange, isDebt: true)),
+                            Expanded(child: _buildFinanceCard('Debt', expProv.outstandingDebt, _orange, config, isDebt: true)),
                           ],
                         ),
                       ],
@@ -398,9 +421,9 @@ class DashboardScreen extends StatelessWidget {
                     child: Container(
                       padding: const EdgeInsets.all(24),
                       decoration: BoxDecoration(
-                        color: Colors.red.shade50,
+                        color: config.softBg,
                         borderRadius: BorderRadius.circular(32),
-                        border: Border.all(color: Colors.red.shade100)
+                        border: Border.all(color: config.primaryAccent.withValues(alpha: 0.2))
                       ),
                       child: Row(
                         mainAxisAlignment: MainAxisAlignment.spaceBetween,
@@ -408,7 +431,7 @@ class DashboardScreen extends StatelessWidget {
                           Column(
                             crossAxisAlignment: CrossAxisAlignment.start,
                             children: [
-                               Text('UPCOMING CLASSES', style: GoogleFonts.plusJakartaSans(fontSize: 10, fontWeight: FontWeight.w900, color: _red600, letterSpacing: 1.5)),
+                               Text('UPCOMING CLASSES', style: GoogleFonts.plusJakartaSans(fontSize: 10, fontWeight: FontWeight.w900, color: config.primaryAccent, letterSpacing: 1.5)),
                                const SizedBox(height: 4),
                                Text('${timeProv.getItemsForDay(DateTime.now().weekday).where((e) {
                                  final now = TimeOfDay.now();
@@ -418,8 +441,8 @@ class DashboardScreen extends StatelessWidget {
                           ),
                           Container(
                             width: 48, height: 48,
-                            decoration: BoxDecoration(color: Colors.white, borderRadius: BorderRadius.circular(16), border: Border.all(color: Colors.red.shade100)),
-                            child: const Icon(Icons.arrow_forward, color: _red600),
+                            decoration: BoxDecoration(color: config.cardColor, borderRadius: BorderRadius.circular(16), border: Border.all(color: config.primaryAccent.withValues(alpha: 0.2))),
+                            child: Icon(Icons.arrow_forward, color: config.primaryAccent),
                           )
                         ],
                       ),
@@ -435,17 +458,21 @@ class DashboardScreen extends StatelessWidget {
     );
   }
 
-  Widget _buildInfoCard({required String title, required String value, required String subtitle, required IconData icon, required Color color}) {
+  Widget _buildInfoCard({required String title, required String value, required String subtitle, required IconData icon, required Color color, required ThemeConfig config}) {
     return Container(
        width: 180,
-       padding: const EdgeInsets.all(20),
+       clipBehavior: Clip.antiAlias,
        decoration: BoxDecoration(
-         color: Colors.white,
+         color: config.cardColor,
          borderRadius: BorderRadius.circular(32),
-         boxShadow: const [BoxShadow(color: Color.fromRGBO(0,0,0,0.03), blurRadius: 10, offset: Offset(0, 4))],
-         border: Border(top: BorderSide(color: color, width: 6)),
+         boxShadow: [BoxShadow(color: Color.fromRGBO(0,0,0,0.03), blurRadius: 10, offset: Offset(0, 4))],
        ),
-       child: Column(
+       child: Container(
+         padding: const EdgeInsets.all(20),
+         decoration: BoxDecoration(
+           border: Border(top: BorderSide(color: color, width: 6)),
+         ),
+         child: Column(
          crossAxisAlignment: CrossAxisAlignment.start,
          mainAxisAlignment: MainAxisAlignment.spaceBetween,
          children: [
@@ -466,6 +493,7 @@ class DashboardScreen extends StatelessWidget {
            )
          ],
        ),
+      ),
     );
   }
 
@@ -488,17 +516,21 @@ class DashboardScreen extends StatelessWidget {
     );
   }
 
-  Widget _buildFinanceCard(String label, double amount, Color color, {String? subtitle, bool isDebt = false}) {
+  Widget _buildFinanceCard(String label, double amount, Color color, ThemeConfig config, {String? subtitle, bool isDebt = false}) {
      final fmt = NumberFormat.currency(locale: 'en_IN', symbol: '₹', decimalDigits: 0);
      return Container(
-       padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 16),
+       clipBehavior: Clip.antiAlias,
        decoration: BoxDecoration(
-         color: Colors.white,
+         color: config.cardColor,
          borderRadius: BorderRadius.circular(24),
-         border: Border(left: BorderSide(color: color, width: 4)),
-         boxShadow: const [BoxShadow(color: Color.fromRGBO(0,0,0,0.02), blurRadius: 10, offset: Offset(0, 4))]
+         boxShadow: [BoxShadow(color: Color.fromRGBO(0,0,0,0.02), blurRadius: 10, offset: Offset(0, 4))]
        ),
-       child: Column(
+       child: Container(
+         padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 16),
+         decoration: BoxDecoration(
+           border: Border(left: BorderSide(color: color, width: 4)),
+         ),
+         child: Column(
          crossAxisAlignment: CrossAxisAlignment.start,
          children: [
            Text(label.toUpperCase(), style: GoogleFonts.plusJakartaSans(fontSize: 9, fontWeight: FontWeight.w900, color: Colors.grey.shade400, letterSpacing: 1.5)),
@@ -513,6 +545,54 @@ class DashboardScreen extends StatelessWidget {
            ]
          ],
        ),
+      ),
      );
+  }
+
+  Widget _buildThemeSelector(BuildContext context, ThemeProvider themeProv, ThemeConfig config) {
+    final config = Provider.of<ThemeProvider>(context, listen: false).config;
+    return Container(
+      padding: const EdgeInsets.all(24),
+      decoration: BoxDecoration(
+        color: config.cardColor,
+        borderRadius: const BorderRadius.vertical(top: Radius.circular(32)),
+      ),
+      child: Column(
+        mainAxisSize: MainAxisSize.min,
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Text('Theme Settings', style: GoogleFonts.plusJakartaSans(fontSize: 20, fontWeight: FontWeight.bold, color: config.textMain)),
+          const SizedBox(height: 16),
+          ListTile(
+            leading: Icon(Icons.light_mode, color: themeProv.mode == AppThemeMode.light ? config.primaryAccent : config.textMuted),
+            title: Text('Light Mode', style: TextStyle(color: config.textMain, fontWeight: themeProv.mode == AppThemeMode.light ? FontWeight.bold : FontWeight.normal)),
+            trailing: themeProv.mode == AppThemeMode.light ? Icon(Icons.check, color: config.primaryAccent) : null,
+            onTap: () {
+              themeProv.setTheme(AppThemeMode.light);
+              Navigator.pop(context);
+            },
+          ),
+          ListTile(
+            leading: Icon(Icons.dark_mode, color: themeProv.mode == AppThemeMode.dark ? config.primaryAccent : config.textMuted),
+            title: Text('Dark Mode', style: TextStyle(color: config.textMain, fontWeight: themeProv.mode == AppThemeMode.dark ? FontWeight.bold : FontWeight.normal)),
+            trailing: themeProv.mode == AppThemeMode.dark ? Icon(Icons.check, color: config.primaryAccent) : null,
+            onTap: () {
+              themeProv.setTheme(AppThemeMode.dark);
+              Navigator.pop(context);
+            },
+          ),
+          ListTile(
+            leading: Icon(Icons.water_drop, color: themeProv.mode == AppThemeMode.blue ? config.primaryAccent : config.textMuted),
+            title: Text('Blue Mode', style: TextStyle(color: config.textMain, fontWeight: themeProv.mode == AppThemeMode.blue ? FontWeight.bold : FontWeight.normal)),
+            trailing: themeProv.mode == AppThemeMode.blue ? Icon(Icons.check, color: config.primaryAccent) : null,
+            onTap: () {
+              themeProv.setTheme(AppThemeMode.blue);
+              Navigator.pop(context);
+            },
+          ),
+          const SizedBox(height: 24),
+        ],
+      ),
+    );
   }
 }

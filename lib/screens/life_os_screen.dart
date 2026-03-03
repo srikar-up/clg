@@ -4,17 +4,14 @@ import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import 'package:google_fonts/google_fonts.dart';
 import '../logic/life_provider.dart';
+import '../logic/theme_provider.dart';
 import '../data/models.dart';
 
-const _primaryRed = Color(0xFFDC2626);
 const _softRed = Color(0xFFFEF2F2);
 const _gold = Color(0xFFFBBF24);
 const _silver = Color(0xFF94A3B8);
 const _bronze = Color(0xFFD97706);
 const _steel = Color(0xFF475569);
-const _textDark = Color(0xFF1F2937);
-const _gradStart = Color(0xFFEF4444);
-const _gradEnd = Color(0xFF991B1B);
 
 class LifeOsScreen extends StatefulWidget {
   const LifeOsScreen({super.key});
@@ -30,6 +27,7 @@ class _LifeOsScreenState extends State<LifeOsScreen> with SingleTickerProviderSt
   final List<_FloatingXP> _floatingXps = [];
   
   void _gainXP(int amount, TapDownDetails details, BuildContext context) {
+    final config = Provider.of<ThemeProvider>(context, listen: false).config;
     setState(() {
       _floatingXps.add(_FloatingXP(
         id: DateTime.now().millisecondsSinceEpoch.toString(),
@@ -52,10 +50,12 @@ class _LifeOsScreenState extends State<LifeOsScreen> with SingleTickerProviderSt
 
   @override
   Widget build(BuildContext context) {
+    final themeProv = context.watch<ThemeProvider>();
+    final config = themeProv.config;
     final provider = context.watch<LifeProvider>();
 
     return Scaffold(
-      backgroundColor: _softRed,
+      backgroundColor: config.bgPrimary,
       body: Stack(
         children: [
           SafeArea(
@@ -63,7 +63,7 @@ class _LifeOsScreenState extends State<LifeOsScreen> with SingleTickerProviderSt
               children: [
                 // HEADER
                 Container(
-                  color: Colors.white,
+                  color: config.cardColor,
                   child: Column(
                     children: [
                       Padding(
@@ -77,14 +77,13 @@ class _LifeOsScreenState extends State<LifeOsScreen> with SingleTickerProviderSt
                                   width: 48,
                                   height: 48,
                                   decoration: BoxDecoration(
-                                    gradient: const LinearGradient(
-                                      colors: [_gradStart, _gradEnd],
+                                    gradient: LinearGradient(
+                                      colors: [config.gradStart, config.gradEnd],
                                       begin: Alignment.topLeft,
                                       end: Alignment.bottomRight,
                                     ),
                                     borderRadius: BorderRadius.circular(19),
-                                    boxShadow: const [
-                                      BoxShadow(color: Color.fromRGBO(220, 38, 38, 0.3), blurRadius: 10, offset: Offset(0, 5))
+                                    boxShadow: [BoxShadow(color: config.primaryAccent.withValues(alpha: 0.3), blurRadius: 10, offset: Offset(0, 5))
                                     ]
                                   ),
                                   alignment: Alignment.center,
@@ -94,9 +93,9 @@ class _LifeOsScreenState extends State<LifeOsScreen> with SingleTickerProviderSt
                                 Column(
                                   crossAxisAlignment: CrossAxisAlignment.start,
                                   children: [
-                                    Text('Commander', style: GoogleFonts.plusJakartaSans(fontSize: 14, fontWeight: FontWeight.w900, color: Colors.grey.shade900, height: 1)),
+                                    Text('Commander', style: GoogleFonts.plusJakartaSans(fontSize: 14, fontWeight: FontWeight.w900, color: config.textMain, height: 1)),
                                     const SizedBox(height: 4),
-                                    Text('Warrior Rank', style: GoogleFonts.plusJakartaSans(fontSize: 10, fontWeight: FontWeight.w900, color: _primaryRed, letterSpacing: 1.5)),
+                                    Text('Warrior Rank', style: GoogleFonts.plusJakartaSans(fontSize: 10, fontWeight: FontWeight.w900, color: config.primaryAccent, letterSpacing: 1.5)),
                                   ],
                                 )
                               ],
@@ -104,8 +103,8 @@ class _LifeOsScreenState extends State<LifeOsScreen> with SingleTickerProviderSt
                             Column(
                               crossAxisAlignment: CrossAxisAlignment.end,
                               children: [
-                                Text('TOTAL XP', style: GoogleFonts.plusJakartaSans(fontSize: 10, fontWeight: FontWeight.w900, color: Colors.grey.shade400, letterSpacing: 1)),
-                                Text(provider.totalPoints.toString().replaceAllMapped(RegExp(r'(\d{1,3})(?=(\d{3})+(?!\d))'), (Match m) => '${m[1]},'), style: GoogleFonts.plusJakartaSans(fontSize: 18, fontWeight: FontWeight.w900, color: Colors.grey.shade800)),
+                                Text('TOTAL XP', style: GoogleFonts.plusJakartaSans(fontSize: 10, fontWeight: FontWeight.w900, color: config.textMuted.withValues(alpha: 0.6), letterSpacing: 1)),
+                                Text(provider.totalPoints.toString().replaceAllMapped(RegExp(r'(\d{1,3})(?=(\d{3})+(?!\d))'), (Match m) => '${m[1]},'), style: GoogleFonts.plusJakartaSans(fontSize: 18, fontWeight: FontWeight.w900, color: config.textMain)),
                               ],
                             )
                           ],
@@ -114,7 +113,7 @@ class _LifeOsScreenState extends State<LifeOsScreen> with SingleTickerProviderSt
                       
                       // TABS
                       Container(
-                        decoration: BoxDecoration(border: Border(top: BorderSide(color: Colors.grey.shade100))),
+                        decoration: BoxDecoration(border: Border(top: BorderSide(color: config.softBg))),
                         child: Row(
                           mainAxisAlignment: MainAxisAlignment.spaceAround,
                           children: [
@@ -144,9 +143,9 @@ class _LifeOsScreenState extends State<LifeOsScreen> with SingleTickerProviderSt
                           child: Container(
                             padding: const EdgeInsets.all(24),
                             decoration: BoxDecoration(
-                              gradient: const LinearGradient(colors: [_gradStart, _gradEnd], begin: Alignment.topLeft, end: Alignment.bottomRight),
+                              gradient: LinearGradient(colors: [config.gradStart, config.gradEnd], begin: Alignment.topLeft, end: Alignment.bottomRight),
                               borderRadius: BorderRadius.circular(40),
-                              boxShadow: const [BoxShadow(color: Color.fromRGBO(239, 68, 68, 0.2), blurRadius: 20, spreadRadius: -5, offset: Offset(0, 10))],
+                              boxShadow: [BoxShadow(color: config.primaryAccent.withValues(alpha: 0.2), blurRadius: 20, spreadRadius: -5, offset: Offset(0, 10))],
                             ),
                             child: Column(
                               children: [
@@ -162,14 +161,14 @@ class _LifeOsScreenState extends State<LifeOsScreen> with SingleTickerProviderSt
                                         Text('Level ${provider.currentLevel + 1}', style: GoogleFonts.plusJakartaSans(fontSize: 24, fontWeight: FontWeight.w900, color: Colors.white)),
                                       ],
                                     ),
-                                    Text('${provider.currentLevelProgressXp} / ${provider.nextLevelXp} XP', style: GoogleFonts.plusJakartaSans(fontSize: 12, fontWeight: FontWeight.bold, color: Colors.white.withValues(alpha: 0.9))),
+                                    Text('${provider.currentLevelProgressXp} / ${provider.nextLevelXp} XP', style: GoogleFonts.plusJakartaSans(fontSize: 12, fontWeight: FontWeight.bold, color: Colors.white70)),
                                   ],
                                 ),
                                 const SizedBox(height: 16),
                                 Container(
                                   height: 12,
                                   width: double.infinity,
-                                  decoration: BoxDecoration(color: Colors.white.withValues(alpha: 0.2), borderRadius: BorderRadius.circular(12)),
+                                  decoration: BoxDecoration(color: Colors.white24, borderRadius: BorderRadius.circular(12)),
                                   child: FractionallySizedBox(
                                     alignment: Alignment.centerLeft,
                                     widthFactor: provider.levelProgress.clamp(0.0, 1.0),
@@ -209,17 +208,18 @@ class _LifeOsScreenState extends State<LifeOsScreen> with SingleTickerProviderSt
           width: 64,
           height: 64,
           decoration: BoxDecoration(
-            gradient: const LinearGradient(colors: [_gradStart, _gradEnd], begin: Alignment.topLeft, end: Alignment.bottomRight),
+            gradient: LinearGradient(colors: [config.gradStart, config.gradEnd], begin: Alignment.topLeft, end: Alignment.bottomRight),
             shape: BoxShape.circle,
-            boxShadow: const [BoxShadow(color: Color.fromRGBO(220, 38, 38, 0.3), blurRadius: 15, spreadRadius: -2, offset: Offset(0, 8))]
+            boxShadow: [BoxShadow(color: config.primaryAccent.withValues(alpha: 0.3), blurRadius: 15, spreadRadius: -2, offset: Offset(0, 8))]
           ),
-          child: const Icon(Icons.add, color: Colors.white, size: 28),
+          child: Icon(Icons.add, color: Colors.white, size: 28),
         ),
       ),
     );
   }
 
   Widget _buildTabItem(int index, IconData icon, String label) {
+    final config = Provider.of<ThemeProvider>(context, listen: false).config;
     bool isAct = _currentIndex == index;
     return GestureDetector(
       onTap: () => setState(() => _currentIndex = index),
@@ -227,13 +227,13 @@ class _LifeOsScreenState extends State<LifeOsScreen> with SingleTickerProviderSt
       child: Container(
         padding: const EdgeInsets.symmetric(vertical: 16, horizontal: 8),
         decoration: BoxDecoration(
-          border: Border(bottom: BorderSide(color: isAct ? _primaryRed : Colors.transparent, width: 3))
+          border: Border(bottom: BorderSide(color: isAct ? config.primaryAccent : Colors.transparent, width: 3))
         ),
         child: Column(
           children: [
-            Icon(icon, size: 16, color: isAct ? _primaryRed : Colors.grey.shade400),
+            Icon(icon, size: 16, color: isAct ? config.primaryAccent : config.textMuted.withValues(alpha: 0.6)),
             const SizedBox(height: 4),
-            Text(label.toUpperCase(), style: GoogleFonts.plusJakartaSans(fontSize: 9, fontWeight: FontWeight.w900, color: isAct ? _primaryRed : Colors.grey.shade400, letterSpacing: 0.5)),
+            Text(label.toUpperCase(), style: GoogleFonts.plusJakartaSans(fontSize: 9, fontWeight: FontWeight.w900, color: isAct ? config.primaryAccent : config.textMuted.withValues(alpha: 0.6), letterSpacing: 0.5)),
           ],
         ),
       ),
@@ -241,6 +241,7 @@ class _LifeOsScreenState extends State<LifeOsScreen> with SingleTickerProviderSt
   }
 
   Widget _buildCurrentView(BuildContext context, LifeProvider provider) {
+    final config = Provider.of<ThemeProvider>(context, listen: false).config;
     switch (_currentIndex) {
       case 0: return _QuestsView(provider: provider, onXP: _gainXP);
       case 1: return _WorkView(provider: provider, onXP: _gainXP);
@@ -252,6 +253,7 @@ class _LifeOsScreenState extends State<LifeOsScreen> with SingleTickerProviderSt
   }
 
   void _showFabMenu(BuildContext context, LifeProvider provider) {
+    final config = Provider.of<ThemeProvider>(context, listen: false).config;
     showModalBottomSheet(
       context: context,
       backgroundColor: Colors.transparent,
@@ -263,17 +265,17 @@ class _LifeOsScreenState extends State<LifeOsScreen> with SingleTickerProviderSt
           mainAxisAlignment: MainAxisAlignment.end,
           children: [
             Container(
-              decoration: const BoxDecoration(
-                color: Colors.white,
+              decoration: BoxDecoration(
+                color: config.cardColor,
                 borderRadius: BorderRadius.vertical(top: Radius.circular(48)),
               ),
               padding: const EdgeInsets.all(32),
               child: Column(
                 mainAxisSize: MainAxisSize.min,
                 children: [
-                  Container(width: 48, height: 6, decoration: BoxDecoration(color: Colors.grey.shade200, borderRadius: BorderRadius.circular(10))),
+                  Container(width: 48, height: 6, decoration: BoxDecoration(color: config.textMuted.withValues(alpha: 0.2), borderRadius: BorderRadius.circular(10))),
                   const SizedBox(height: 24),
-                  Text('Update Life OS', style: GoogleFonts.plusJakartaSans(fontSize: 20, fontWeight: FontWeight.w900, color: Colors.grey.shade900)),
+                  Text('Update Life OS', style: GoogleFonts.plusJakartaSans(fontSize: 20, fontWeight: FontWeight.w900, color: config.textMain)),
                   const SizedBox(height: 24),
                   
                   _FabBtn(icon: Icons.shield_outlined, label: 'ADD QUEST', onTap: () {
@@ -298,7 +300,7 @@ class _LifeOsScreenState extends State<LifeOsScreen> with SingleTickerProviderSt
                   const SizedBox(height: 24),
                   GestureDetector(
                     onTap: () => Navigator.pop(ctx),
-                    child: Text('CLOSE', style: GoogleFonts.plusJakartaSans(fontSize: 10, fontWeight: FontWeight.bold, color: Colors.grey.shade400, letterSpacing: 2)),
+                    child: Text('CLOSE', style: GoogleFonts.plusJakartaSans(fontSize: 10, fontWeight: FontWeight.bold, color: config.textMuted.withValues(alpha: 0.6), letterSpacing: 2)),
                   )
                 ],
               ),
@@ -311,6 +313,7 @@ class _LifeOsScreenState extends State<LifeOsScreen> with SingleTickerProviderSt
   
   // Dialogs (reusing mostly but adjusting styling)
   void _showCreateQuestDialog(BuildContext context, LifeProvider provider) {
+    final config = Provider.of<ThemeProvider>(context, listen: false).config;
     final titleCtrl = TextEditingController();
     final penaltyCtrl = TextEditingController(text: '0');
     String selectedRank = 'gold';
@@ -321,7 +324,7 @@ class _LifeOsScreenState extends State<LifeOsScreen> with SingleTickerProviderSt
         filter: ImageFilter.blur(sigmaX: 5, sigmaY: 5),
         child: StatefulBuilder(
           builder: (context, setState) => AlertDialog(
-            backgroundColor: Colors.white,
+            backgroundColor: config.cardColor,
             shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(40)),
             contentPadding: const EdgeInsets.all(32),
             content: Column(
@@ -331,10 +334,10 @@ class _LifeOsScreenState extends State<LifeOsScreen> with SingleTickerProviderSt
                 Text('Create Quest', style: GoogleFonts.plusJakartaSans(fontSize: 20, fontWeight: FontWeight.w900)),
                 const SizedBox(height: 16),
                 Container(
-                  decoration: BoxDecoration(color: Colors.grey.shade50, borderRadius: BorderRadius.circular(24)),
+                  decoration: BoxDecoration(color: config.softBg, borderRadius: BorderRadius.circular(24)),
                   child: TextField(
                     controller: titleCtrl,
-                    decoration: const InputDecoration(border: InputBorder.none, contentPadding: EdgeInsets.all(16), hintText: "Quest Name"),
+                    decoration: InputDecoration(border: InputBorder.none, contentPadding: EdgeInsets.all(16), hintText: "Quest Name"),
                     style: GoogleFonts.plusJakartaSans(fontWeight: FontWeight.bold),
                   ),
                 ),
@@ -344,7 +347,7 @@ class _LifeOsScreenState extends State<LifeOsScreen> with SingleTickerProviderSt
                   decoration: InputDecoration(
                     border: OutlineInputBorder(borderRadius: BorderRadius.circular(24), borderSide: BorderSide.none),
                     filled: true,
-                    fillColor: Colors.grey.shade50,
+                    fillColor: config.softBg,
                     contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 16),
                   ),
                   items: [
@@ -364,18 +367,18 @@ class _LifeOsScreenState extends State<LifeOsScreen> with SingleTickerProviderSt
                   child: Container(
                     width: double.infinity,
                     padding: const EdgeInsets.all(16),
-                    decoration: BoxDecoration(border: Border.all(color: Colors.red.shade100), borderRadius: BorderRadius.circular(24)),
-                    child: Text(deadline == null ? 'Set Deadline (Optional)' : 'Deadline: ${deadline.toString().substring(0, 10)}', style: GoogleFonts.plusJakartaSans(fontWeight: FontWeight.bold, color: deadline == null ? Colors.grey : _primaryRed)),
+                    decoration: BoxDecoration(border: Border.all(color: config.primaryAccent.withValues(alpha: 0.2)), borderRadius: BorderRadius.circular(24)),
+                    child: Text(deadline == null ? 'Set Deadline (Optional)' : 'Deadline: ${deadline.toString().substring(0, 10)}', style: GoogleFonts.plusJakartaSans(fontWeight: FontWeight.bold, color: deadline == null ? config.textMuted : config.primaryAccent)),
                   ),
                 ),
                 if (deadline != null) ...[
                   const SizedBox(height: 16),
                   Container(
-                    decoration: BoxDecoration(color: Colors.grey.shade50, borderRadius: BorderRadius.circular(24)),
+                    decoration: BoxDecoration(color: config.softBg, borderRadius: BorderRadius.circular(24)),
                     child: TextField(
                       controller: penaltyCtrl,
                       keyboardType: TextInputType.number,
-                      decoration: const InputDecoration(border: InputBorder.none, contentPadding: EdgeInsets.all(16), hintText: "XP Penalty if missed"),
+                      decoration: InputDecoration(border: InputBorder.none, contentPadding: EdgeInsets.all(16), hintText: "XP Penalty if missed"),
                       style: GoogleFonts.plusJakartaSans(fontWeight: FontWeight.bold),
                     ),
                   ),
@@ -399,7 +402,7 @@ class _LifeOsScreenState extends State<LifeOsScreen> with SingleTickerProviderSt
                   child: Container(
                     width: double.infinity,
                     padding: const EdgeInsets.symmetric(vertical: 20),
-                    decoration: BoxDecoration(color: _primaryRed, borderRadius: BorderRadius.circular(32)),
+                    decoration: BoxDecoration(color: config.primaryAccent, borderRadius: BorderRadius.circular(32)),
                     alignment: Alignment.center,
                     child: Text('CREATE', style: GoogleFonts.plusJakartaSans(color: Colors.white, fontWeight: FontWeight.w900)),
                   ),
@@ -413,6 +416,7 @@ class _LifeOsScreenState extends State<LifeOsScreen> with SingleTickerProviderSt
   }
 
   void _showAddCounterDialog(BuildContext context, LifeProvider provider) {
+    final config = Provider.of<ThemeProvider>(context, listen: false).config;
     final titleCtrl = TextEditingController();
     final xpCtrl = TextEditingController(text: '10');
     String selectedIcon = 'bolt';
@@ -422,7 +426,7 @@ class _LifeOsScreenState extends State<LifeOsScreen> with SingleTickerProviderSt
         filter: ImageFilter.blur(sigmaX: 5, sigmaY: 5),
         child: StatefulBuilder(
           builder: (context, setState) => AlertDialog(
-            backgroundColor: Colors.white,
+            backgroundColor: config.cardColor,
             shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(40)),
             contentPadding: const EdgeInsets.all(32),
             content: Column(
@@ -432,20 +436,20 @@ class _LifeOsScreenState extends State<LifeOsScreen> with SingleTickerProviderSt
                 Text('Add Counter', style: GoogleFonts.plusJakartaSans(fontSize: 20, fontWeight: FontWeight.w900)),
                 const SizedBox(height: 16),
                 Container(
-                  decoration: BoxDecoration(color: Colors.grey.shade50, borderRadius: BorderRadius.circular(24)),
+                  decoration: BoxDecoration(color: config.softBg, borderRadius: BorderRadius.circular(24)),
                   child: TextField(
                     controller: titleCtrl,
-                    decoration: const InputDecoration(border: InputBorder.none, contentPadding: EdgeInsets.all(16), hintText: "Attribute (e.g. Pushups)"),
+                    decoration: InputDecoration(border: InputBorder.none, contentPadding: EdgeInsets.all(16), hintText: "Attribute (e.g. Pushups)"),
                     style: GoogleFonts.plusJakartaSans(fontWeight: FontWeight.bold),
                   ),
                 ),
                 const SizedBox(height: 16),
                 Container(
-                  decoration: BoxDecoration(color: Colors.grey.shade50, borderRadius: BorderRadius.circular(24)),
+                  decoration: BoxDecoration(color: config.softBg, borderRadius: BorderRadius.circular(24)),
                   child: TextField(
                     controller: xpCtrl,
                     keyboardType: TextInputType.number,
-                    decoration: const InputDecoration(border: InputBorder.none, contentPadding: EdgeInsets.all(16), hintText: "XP base reward (e.g. 10)"),
+                    decoration: InputDecoration(border: InputBorder.none, contentPadding: EdgeInsets.all(16), hintText: "XP base reward (e.g. 10)"),
                     style: GoogleFonts.plusJakartaSans(fontWeight: FontWeight.bold),
                   ),
                 ),
@@ -455,7 +459,7 @@ class _LifeOsScreenState extends State<LifeOsScreen> with SingleTickerProviderSt
                   decoration: InputDecoration(
                     border: OutlineInputBorder(borderRadius: BorderRadius.circular(24), borderSide: BorderSide.none),
                     filled: true,
-                    fillColor: Colors.grey.shade50,
+                    fillColor: config.softBg,
                     contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 16),
                   ),
                   items: [
@@ -481,7 +485,7 @@ class _LifeOsScreenState extends State<LifeOsScreen> with SingleTickerProviderSt
                   child: Container(
                     width: double.infinity,
                     padding: const EdgeInsets.symmetric(vertical: 20),
-                    decoration: BoxDecoration(color: _primaryRed, borderRadius: BorderRadius.circular(32)),
+                    decoration: BoxDecoration(color: config.primaryAccent, borderRadius: BorderRadius.circular(32)),
                     alignment: Alignment.center,
                     child: Text('ADD', style: GoogleFonts.plusJakartaSans(color: Colors.white, fontWeight: FontWeight.w900)),
                   ),
@@ -495,6 +499,7 @@ class _LifeOsScreenState extends State<LifeOsScreen> with SingleTickerProviderSt
   }
   
   void _showAddEventDialog(BuildContext context, LifeProvider provider) {
+    final config = Provider.of<ThemeProvider>(context, listen: false).config;
     final titleCtrl = TextEditingController();
     DateTime date = DateTime.now();
     showDialog(
@@ -503,7 +508,7 @@ class _LifeOsScreenState extends State<LifeOsScreen> with SingleTickerProviderSt
         filter: ImageFilter.blur(sigmaX: 5, sigmaY: 5),
         child: StatefulBuilder(
           builder: (context, setState) => AlertDialog(
-            backgroundColor: Colors.white,
+            backgroundColor: config.cardColor,
             shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(40)),
             contentPadding: const EdgeInsets.all(32),
             content: Column(
@@ -513,10 +518,10 @@ class _LifeOsScreenState extends State<LifeOsScreen> with SingleTickerProviderSt
                 Text('Save Event', style: GoogleFonts.plusJakartaSans(fontSize: 20, fontWeight: FontWeight.w900)),
                 const SizedBox(height: 16),
                 Container(
-                  decoration: BoxDecoration(color: Colors.grey.shade50, borderRadius: BorderRadius.circular(24)),
+                  decoration: BoxDecoration(color: config.softBg, borderRadius: BorderRadius.circular(24)),
                   child: TextField(
                     controller: titleCtrl,
-                    decoration: const InputDecoration(border: InputBorder.none, contentPadding: EdgeInsets.all(16), hintText: "Event Name"),
+                    decoration: InputDecoration(border: InputBorder.none, contentPadding: EdgeInsets.all(16), hintText: "Event Name"),
                     style: GoogleFonts.plusJakartaSans(fontWeight: FontWeight.bold),
                   ),
                 ),
@@ -528,8 +533,8 @@ class _LifeOsScreenState extends State<LifeOsScreen> with SingleTickerProviderSt
                   },
                   child: Container(
                     padding: const EdgeInsets.all(16),
-                    decoration: BoxDecoration(border: Border.all(color: Colors.red.shade100), borderRadius: BorderRadius.circular(24)),
-                    child: Text(date.toString().substring(0, 10), style: GoogleFonts.plusJakartaSans(fontWeight: FontWeight.bold, color: _primaryRed)),
+                    decoration: BoxDecoration(border: Border.all(color: config.primaryAccent.withValues(alpha: 0.2)), borderRadius: BorderRadius.circular(24)),
+                    child: Text(date.toString().substring(0, 10), style: GoogleFonts.plusJakartaSans(fontWeight: FontWeight.bold, color: config.primaryAccent)),
                   ),
                 ),
                 const SizedBox(height: 24),
@@ -543,7 +548,7 @@ class _LifeOsScreenState extends State<LifeOsScreen> with SingleTickerProviderSt
                   child: Container(
                     width: double.infinity,
                     padding: const EdgeInsets.symmetric(vertical: 20),
-                    decoration: BoxDecoration(color: _primaryRed, borderRadius: BorderRadius.circular(32)),
+                    decoration: BoxDecoration(color: config.primaryAccent, borderRadius: BorderRadius.circular(32)),
                     alignment: Alignment.center,
                     child: Text('SAVE', style: GoogleFonts.plusJakartaSans(color: Colors.white, fontWeight: FontWeight.w900)),
                   ),
@@ -557,6 +562,7 @@ class _LifeOsScreenState extends State<LifeOsScreen> with SingleTickerProviderSt
   }
   
   void _showAddNoteDialog(BuildContext context, LifeProvider provider) {
+    final config = Provider.of<ThemeProvider>(context, listen: false).config;
     final titleCtrl = TextEditingController();
     bool isTemp = false;
     DateTime? expiryDate;
@@ -566,7 +572,7 @@ class _LifeOsScreenState extends State<LifeOsScreen> with SingleTickerProviderSt
         filter: ImageFilter.blur(sigmaX: 5, sigmaY: 5),
         child: StatefulBuilder(
           builder: (context, setState) => AlertDialog(
-            backgroundColor: Colors.white,
+            backgroundColor: config.cardColor,
             shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(40)),
             contentPadding: const EdgeInsets.all(32),
             content: Column(
@@ -576,10 +582,10 @@ class _LifeOsScreenState extends State<LifeOsScreen> with SingleTickerProviderSt
                 Text('Pin Note', style: GoogleFonts.plusJakartaSans(fontSize: 20, fontWeight: FontWeight.w900)),
                 const SizedBox(height: 16),
                 Container(
-                  decoration: BoxDecoration(color: Colors.grey.shade50, borderRadius: BorderRadius.circular(24)),
+                  decoration: BoxDecoration(color: config.softBg, borderRadius: BorderRadius.circular(24)),
                   child: TextField(
                     controller: titleCtrl,
-                    decoration: const InputDecoration(border: InputBorder.none, contentPadding: EdgeInsets.all(16), hintText: "Note Content..."),
+                    decoration: InputDecoration(border: InputBorder.none, contentPadding: EdgeInsets.all(16), hintText: "Note Content..."),
                     maxLines: 3,
                     style: GoogleFonts.plusJakartaSans(fontWeight: FontWeight.bold),
                   ),
@@ -588,7 +594,7 @@ class _LifeOsScreenState extends State<LifeOsScreen> with SingleTickerProviderSt
                 CheckboxListTile(
                   title: Text('Self Destruct (Temporary)', style: GoogleFonts.plusJakartaSans(fontSize: 12, fontWeight: FontWeight.bold)),
                   value: isTemp,
-                  activeColor: _primaryRed,
+                  activeColor: config.primaryAccent,
                   onChanged: (v) {
                     setState(() {
                       isTemp = v ?? false;
@@ -608,10 +614,10 @@ class _LifeOsScreenState extends State<LifeOsScreen> with SingleTickerProviderSt
                     child: Container(
                       width: double.infinity,
                       padding: const EdgeInsets.all(16),
-                      decoration: BoxDecoration(border: Border.all(color: Colors.red.shade100), borderRadius: BorderRadius.circular(24)),
+                      decoration: BoxDecoration(border: Border.all(color: config.primaryAccent.withValues(alpha: 0.2)), borderRadius: BorderRadius.circular(24)),
                       child: Text(
                         'Expires: ${expiryDate?.toString().substring(0, 10)}',
-                        style: GoogleFonts.plusJakartaSans(fontWeight: FontWeight.bold, color: _primaryRed),
+                        style: GoogleFonts.plusJakartaSans(fontWeight: FontWeight.bold, color: config.primaryAccent),
                       ),
                     ),
                   ),
@@ -627,7 +633,7 @@ class _LifeOsScreenState extends State<LifeOsScreen> with SingleTickerProviderSt
                   child: Container(
                     width: double.infinity,
                     padding: const EdgeInsets.symmetric(vertical: 20),
-                    decoration: BoxDecoration(color: _primaryRed, borderRadius: BorderRadius.circular(32)),
+                    decoration: BoxDecoration(color: config.primaryAccent, borderRadius: BorderRadius.circular(32)),
                     alignment: Alignment.center,
                     child: Text('PIN', style: GoogleFonts.plusJakartaSans(color: Colors.white, fontWeight: FontWeight.w900)),
                   ),
@@ -649,20 +655,22 @@ class _FabBtn extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final themeProv = context.watch<ThemeProvider>();
+    final config = themeProv.config;
     return GestureDetector(
       onTap: onTap,
       child: Container(
         padding: const EdgeInsets.all(20),
         decoration: BoxDecoration(
-          color: Colors.red.shade50,
-          border: Border.all(color: Colors.red.shade100),
+          color: config.softBg,
+          border: Border.all(color: config.primaryAccent.withValues(alpha: 0.2)),
           borderRadius: BorderRadius.circular(32),
         ),
         child: Row(
           children: [
-            Icon(icon, color: _primaryRed, size: 20),
+            Icon(icon, color: config.primaryAccent, size: 20),
             const SizedBox(width: 16),
-            Text(label, style: GoogleFonts.plusJakartaSans(fontSize: 12, fontWeight: FontWeight.w900, color: _primaryRed, letterSpacing: 1)),
+            Text(label, style: GoogleFonts.plusJakartaSans(fontSize: 12, fontWeight: FontWeight.w900, color: config.primaryAccent, letterSpacing: 1)),
           ],
         ),
       ),
@@ -680,6 +688,8 @@ class _QuestsView extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final themeProv = context.watch<ThemeProvider>();
+    final config = themeProv.config;
     final quests = provider.quests.where((q) => !q.isCompleted).toList();
     return Padding(
       padding: const EdgeInsets.symmetric(horizontal: 20),
@@ -688,21 +698,23 @@ class _QuestsView extends StatelessWidget {
         children: [
           Padding(
             padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 8),
-            child: Text('ACTIVE QUESTS', style: GoogleFonts.plusJakartaSans(fontSize: 10, fontWeight: FontWeight.w900, color: Colors.grey.shade500, letterSpacing: 1.5)),
+            child: Text('ACTIVE QUESTS', style: GoogleFonts.plusJakartaSans(fontSize: 10, fontWeight: FontWeight.w900, color: config.textMuted, letterSpacing: 1.5)),
           ),
           if (quests.isEmpty)
              Padding(
                padding: const EdgeInsets.all(24),
-               child: Center(child: Text("No quests yet.", style: GoogleFonts.plusJakartaSans(fontSize: 14, fontWeight: FontWeight.bold, color: Colors.grey.shade400))),
+               child: Center(child: Text("No quests yet.", style: GoogleFonts.plusJakartaSans(fontSize: 14, fontWeight: FontWeight.bold, color: config.textMuted.withValues(alpha: 0.6)))),
              )
           else
             ...quests.map((q) => _buildQuestCard(q, context)),
         ],
+    
       ),
     );
   }
 
   Widget _buildQuestCard(Quest quest, BuildContext context) {
+    final config = Provider.of<ThemeProvider>(context, listen: false).config;
     Color rankColor = _gold;
     String rEmoji = '🥇';
     int xp = 150;
@@ -716,10 +728,10 @@ class _QuestsView extends StatelessWidget {
       padding: const EdgeInsets.all(20),
       // "Cute Card" styling
       decoration: BoxDecoration(
-        color: Colors.white,
+        color: config.cardColor,
         borderRadius: BorderRadius.circular(40),
         border: Border(left: BorderSide(color: rankColor, width: 8)),
-        boxShadow: const [BoxShadow(color: Color.fromRGBO(220, 38, 38, 0.08), blurRadius: 30, spreadRadius: -10, offset: Offset(0, 10))],
+        boxShadow: [BoxShadow(color: config.primaryAccent.withValues(alpha: 0.08), blurRadius: 30, spreadRadius: -10, offset: Offset(0, 10))],
       ),
       child: Row(
         children: [
@@ -735,12 +747,12 @@ class _QuestsView extends StatelessWidget {
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                Text(quest.title, style: GoogleFonts.plusJakartaSans(fontSize: 14, fontWeight: FontWeight.w900, color: _textDark, decoration: quest.isCompleted ? TextDecoration.lineThrough : null)),
+                Text(quest.title, style: GoogleFonts.plusJakartaSans(fontSize: 14, fontWeight: FontWeight.w900, color: config.textMain, decoration: quest.isCompleted ? TextDecoration.lineThrough : null)),
                 const SizedBox(height: 2),
-                Text('$rEmoji ${quest.rank.toUpperCase()} • +$xp XP', style: GoogleFonts.plusJakartaSans(fontSize: 9, fontWeight: FontWeight.bold, color: Colors.grey.shade500, letterSpacing: 1)),
+                Text('$rEmoji ${quest.rank.toUpperCase()} • +$xp XP', style: GoogleFonts.plusJakartaSans(fontSize: 9, fontWeight: FontWeight.bold, color: config.textMuted, letterSpacing: 1)),
                 if (quest.deadline != null) ...[
                   const SizedBox(height: 4),
-                  Text('⏰ ${quest.deadline!.toString().substring(0, 10)} ${quest.xpPenalty > 0 ? '(Penalty: -${quest.xpPenalty} XP)' : ''}', style: GoogleFonts.plusJakartaSans(fontSize: 9, fontWeight: FontWeight.bold, color: Colors.red.shade400)),
+                  Text('⏰ ${quest.deadline!.toString().substring(0, 10)} ${quest.xpPenalty > 0 ? '(Penalty: -${quest.xpPenalty} XP)' : ''}', style: GoogleFonts.plusJakartaSans(fontSize: 9, fontWeight: FontWeight.bold, color: config.primaryAccent.withValues(alpha: 0.8))),
                 ]
               ],
             ),
@@ -761,12 +773,12 @@ class _QuestsView extends StatelessWidget {
             child: Container(
               width: 24, height: 24,
               decoration: BoxDecoration(
-                border: Border.all(color: quest.isCompleted ? Colors.transparent : Colors.grey.shade300, width: 2),
-                color: quest.isCompleted ? _primaryRed : Colors.transparent,
+                border: Border.all(color: quest.isCompleted ? Colors.transparent : config.textMuted.withValues(alpha: 0.4), width: 2),
+                color: quest.isCompleted ? config.primaryAccent : Colors.transparent,
                 borderRadius: BorderRadius.circular(6)
               ),
               alignment: Alignment.center,
-              child: quest.isCompleted ? const Icon(Icons.check, size: 16, color: Colors.white) : null,
+              child: quest.isCompleted ? Icon(Icons.check, size: 16, color: config.cardColor) : null,
             ),
           )
         ],
@@ -783,6 +795,8 @@ class _WorkView extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final themeProv = context.watch<ThemeProvider>();
+    final config = themeProv.config;
     final counters = provider.counters;
     return Padding(
         padding: const EdgeInsets.symmetric(horizontal: 20),
@@ -791,7 +805,7 @@ class _WorkView extends StatelessWidget {
           children: [
             Padding(
               padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 8),
-              child: Text('WORK ATTRIBUTES', style: GoogleFonts.plusJakartaSans(fontSize: 10, fontWeight: FontWeight.w900, color: Colors.grey.shade500, letterSpacing: 1.5)),
+              child: Text('WORK ATTRIBUTES', style: GoogleFonts.plusJakartaSans(fontSize: 10, fontWeight: FontWeight.w900, color: config.textMuted, letterSpacing: 1.5)),
             ),
             GridView.builder(
               shrinkWrap: true,
@@ -811,10 +825,10 @@ class _WorkView extends StatelessWidget {
                   child: Container(
                     padding: const EdgeInsets.all(24),
                     decoration: BoxDecoration(
-                      color: Colors.white,
+                      color: config.cardColor,
                       borderRadius: BorderRadius.circular(40),
-                      boxShadow: const [BoxShadow(color: Color.fromRGBO(220, 38, 38, 0.08), blurRadius: 30, spreadRadius: -10, offset: Offset(0, 10))],
-                      border: Border.all(color: const Color.fromRGBO(220, 38, 38, 0.05)),
+                      boxShadow: [BoxShadow(color: config.primaryAccent.withValues(alpha: 0.08), blurRadius: 30, spreadRadius: -10, offset: Offset(0, 10))],
+                      border: Border.all(color: config.primaryAccent.withValues(alpha: 0.05)),
                     ),
                     child: Stack(
                       children: [
@@ -822,18 +836,18 @@ class _WorkView extends StatelessWidget {
                           alignment: Alignment.topRight,
                           child: GestureDetector(
                             onTap: () => provider.deleteCounter(c),
-                            child: Icon(Icons.close, size: 16, color: Colors.grey.shade400),
+                            child: Icon(Icons.close, size: 16, color: config.textMuted.withValues(alpha: 0.6)),
                           ),
                         ),
                         Column(
                           mainAxisAlignment: MainAxisAlignment.center,
                           children: [
                             const SizedBox(width: double.infinity), // forces centering across width
-                            Icon(c.iconData == 'fitness_center' ? Icons.fitness_center : c.iconData == 'water_drop' ? Icons.water_drop : c.iconData == 'book' ? Icons.book : Icons.bolt, color: Colors.red.shade400, size: 32),
+                            Icon(c.iconData == 'fitness_center' ? Icons.fitness_center : c.iconData == 'water_drop' ? Icons.water_drop : c.iconData == 'book' ? Icons.book : Icons.bolt, color: config.primaryAccent.withValues(alpha: 0.8), size: 32),
                         const SizedBox(height: 12),
-                        Text(c.title.toUpperCase(), style: GoogleFonts.plusJakartaSans(fontSize: 10, fontWeight: FontWeight.w900, color: Colors.grey.shade400, letterSpacing: 1)),
+                        Text(c.title.toUpperCase(), style: GoogleFonts.plusJakartaSans(fontSize: 10, fontWeight: FontWeight.w900, color: config.textMuted.withValues(alpha: 0.6), letterSpacing: 1)),
                         const SizedBox(height: 8),
-                            Text('${c.count}', style: GoogleFonts.plusJakartaSans(fontSize: 36, fontWeight: FontWeight.w900, color: _textDark)),
+                            Text('${c.count}', style: GoogleFonts.plusJakartaSans(fontSize: 36, fontWeight: FontWeight.w900, color: config.textMain)),
                           ],
                         ),
                       ],
@@ -854,6 +868,8 @@ class _NotesView extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final themeProv = context.watch<ThemeProvider>();
+    final config = themeProv.config;
     final notes = provider.notes;
     return Padding(
       padding: const EdgeInsets.symmetric(horizontal: 20),
@@ -870,10 +886,10 @@ class _NotesView extends StatelessWidget {
                child: Container(
                  padding: const EdgeInsets.all(20),
                  decoration: BoxDecoration(
-                   color: isTemp ? const Color(0xFFFFFACD) : Colors.white,
+                   color: isTemp ? const Color(0xFFFFFACD) : config.cardColor,
                    borderRadius: BorderRadius.circular(40),
                    border: Border(bottom: BorderSide(color: isTemp ? const Color(0xFFFDE68A) : Colors.transparent, width: 6)),
-                   boxShadow: const [BoxShadow(color: Color.fromRGBO(220, 38, 38, 0.08), blurRadius: 20, spreadRadius: -5, offset: Offset(0, 10))],
+                   boxShadow: [BoxShadow(color: config.primaryAccent.withValues(alpha: 0.08), blurRadius: 20, spreadRadius: -5, offset: Offset(0, 10))],
                  ),
                  child: Column(
                    crossAxisAlignment: CrossAxisAlignment.start,
@@ -881,19 +897,19 @@ class _NotesView extends StatelessWidget {
                      Row(
                        mainAxisAlignment: MainAxisAlignment.spaceBetween,
                        children: [
-                         Icon(isTemp ? Icons.emergency : Icons.push_pin, size: 14, color: _primaryRed),
+                         Icon(isTemp ? Icons.emergency : Icons.push_pin, size: 14, color: isTemp ? Colors.red.shade700 : config.primaryAccent),
                          GestureDetector(
                            onTap: () => provider.deleteNote(n),
-                           child: Icon(Icons.close, size: 16, color: Colors.grey.shade400),
+                           child: Icon(Icons.close, size: 16, color: isTemp ? Colors.black54 : config.textMuted.withValues(alpha: 0.6)),
                          ),
                        ],
                      ),
                      const SizedBox(height: 12),
-                     Expanded(child: Text(n.content, style: GoogleFonts.plusJakartaSans(fontSize: 12, fontWeight: FontWeight.bold, color: Colors.grey.shade700, height: 1.5), overflow: TextOverflow.fade)),
+                     Expanded(child: Text(n.content, style: GoogleFonts.plusJakartaSans(fontSize: 12, fontWeight: FontWeight.bold, color: isTemp ? Colors.black87 : config.textMuted, height: 1.5), overflow: TextOverflow.fade)),
                      if(isTemp)
                         Padding(
                           padding: const EdgeInsets.only(top: 8),
-                          child: Text('EXP: ${n.expiresAt.toString().substring(0,10)}', style: GoogleFonts.plusJakartaSans(fontSize: 8, fontWeight: FontWeight.w900, color: Colors.red.shade400, fontStyle: FontStyle.italic)),
+                          child: Text('EXP: ${n.expiresAt.toString().substring(0,10)}', style: GoogleFonts.plusJakartaSans(fontSize: 8, fontWeight: FontWeight.w900, color: Colors.black54, fontStyle: FontStyle.italic)),
                         )
                    ],
                  ),
@@ -911,6 +927,8 @@ class _EventsView extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final themeProv = context.watch<ThemeProvider>();
+    final config = themeProv.config;
     final events = List<LifeEvent>.from(provider.events)
       ..sort((a, b) => a.daysUntil.compareTo(b.daysUntil));
     
@@ -921,7 +939,7 @@ class _EventsView extends StatelessWidget {
         children: [
           Padding(
              padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 8),
-             child: Text('EVENT MANAGER', style: GoogleFonts.plusJakartaSans(fontSize: 10, fontWeight: FontWeight.w900, color: Colors.grey.shade500, letterSpacing: 1.5)),
+             child: Text('EVENT MANAGER', style: GoogleFonts.plusJakartaSans(fontSize: 10, fontWeight: FontWeight.w900, color: config.textMuted, letterSpacing: 1.5)),
           ),
           ...events.map((e) {
              final days = e.daysUntil;
@@ -932,38 +950,38 @@ class _EventsView extends StatelessWidget {
                  margin: const EdgeInsets.only(bottom: 16),
                  padding: const EdgeInsets.all(20),
                  decoration: BoxDecoration(
-                   color: Colors.white,
+                   color: config.cardColor,
                    borderRadius: BorderRadius.circular(32),
-                   boxShadow: const [BoxShadow(color: Color.fromRGBO(220, 38, 38, 0.05), blurRadius: 20, spreadRadius: -5, offset: Offset(0, 10))],
+                   boxShadow: [BoxShadow(color: config.primaryAccent.withValues(alpha: 0.05), blurRadius: 20, spreadRadius: -5, offset: Offset(0, 10))],
                  ),
                  child: Row(
                    children: [
                      Container(
                        width: 56, height: 56,
-                       decoration: BoxDecoration(color: Colors.grey.shade50, borderRadius: BorderRadius.circular(24)),
+                       decoration: BoxDecoration(color: config.softBg, borderRadius: BorderRadius.circular(24)),
                        alignment: Alignment.center,
-                       child: Text(e.eventType == 'birthday' ? '🎂' : '📅', style: const TextStyle(fontSize: 24)),
+                       child: Text(e.eventType == 'birthday' ? '🎂' : '📅', style: TextStyle(fontSize: 24)),
                      ),
                      const SizedBox(width: 16),
                      Expanded(
                        child: Column(
                          crossAxisAlignment: CrossAxisAlignment.start,
                          children: [
-                           Text(e.name, style: GoogleFonts.plusJakartaSans(fontSize: 14, fontWeight: FontWeight.w900, color: _textDark)),
+                           Text(e.name, style: GoogleFonts.plusJakartaSans(fontSize: 14, fontWeight: FontWeight.w900, color: config.textMain)),
                            const SizedBox(height: 2),
-                           Text(e.eventType.toUpperCase(), style: GoogleFonts.plusJakartaSans(fontSize: 10, fontWeight: FontWeight.bold, color: Colors.grey.shade400)),
+                           Text(e.eventType.toUpperCase(), style: GoogleFonts.plusJakartaSans(fontSize: 10, fontWeight: FontWeight.bold, color: config.textMuted.withValues(alpha: 0.6))),
                          ],
                        ),
                      ),
                      Container(
                        padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
                        decoration: BoxDecoration(color: _softRed, borderRadius: BorderRadius.circular(99)),
-                       child: Text(badgeText, style: GoogleFonts.plusJakartaSans(fontSize: 10, fontWeight: FontWeight.w900, color: _primaryRed)),
+                       child: Text(badgeText, style: GoogleFonts.plusJakartaSans(fontSize: 10, fontWeight: FontWeight.w900, color: config.primaryAccent)),
                      ),
                      const SizedBox(width: 8),
                      GestureDetector(
                        onTap: () => provider.deleteEvent(e),
-                       child: Icon(Icons.close, size: 18, color: Colors.grey.shade400),
+                       child: Icon(Icons.close, size: 18, color: config.textMuted.withValues(alpha: 0.6)),
                      ),
                    ],
                  ),
@@ -1002,6 +1020,8 @@ class _StatsViewState extends State<_StatsView> {
 
   @override
   Widget build(BuildContext context) {
+    final themeProv = context.watch<ThemeProvider>();
+    final config = themeProv.config;
     return Padding(
       padding: const EdgeInsets.symmetric(horizontal: 20),
       child: Column(
@@ -1009,7 +1029,7 @@ class _StatsViewState extends State<_StatsView> {
         children: [
           Padding(
              padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 8),
-             child: Text('COMMANDER PERFORMANCE', style: GoogleFonts.plusJakartaSans(fontSize: 10, fontWeight: FontWeight.w900, color: Colors.grey.shade500, letterSpacing: 1.5)),
+             child: Text('COMMANDER PERFORMANCE', style: GoogleFonts.plusJakartaSans(fontSize: 10, fontWeight: FontWeight.w900, color: config.textMuted, letterSpacing: 1.5)),
           ),
           GridView.count(
              crossAxisCount: 2, shrinkWrap: true, physics: const NeverScrollableScrollPhysics(),
@@ -1023,10 +1043,10 @@ class _StatsViewState extends State<_StatsView> {
           Container(
              width: double.infinity,
              padding: const EdgeInsets.all(32),
-             decoration: BoxDecoration(color: const Color(0xFF111827), borderRadius: BorderRadius.circular(40), boxShadow: const [BoxShadow(color: Color.fromRGBO(0,0,0,0.2), blurRadius: 20, offset: Offset(0,10))]),
+             decoration: BoxDecoration(color: const Color(0xFF111827), borderRadius: BorderRadius.circular(40), boxShadow: [BoxShadow(color: Color.fromRGBO(0,0,0,0.2), blurRadius: 20, offset: Offset(0,10))]),
              child: Column(
                children: [
-                  Text('INTERNAL CLOCK (IST)', style: GoogleFonts.plusJakartaSans(fontSize: 10, fontWeight: FontWeight.w900, color: Colors.red.shade500, letterSpacing: 2)),
+                  Text('INTERNAL CLOCK (IST)', style: GoogleFonts.plusJakartaSans(fontSize: 10, fontWeight: FontWeight.w900, color: config.softBg, letterSpacing: 2)),
                   const SizedBox(height: 8),
                   Text(_s, style: GoogleFonts.plusJakartaSans(fontSize: 36, fontWeight: FontWeight.w900, color: Colors.white, letterSpacing: -1)),
                ],
@@ -1039,14 +1059,15 @@ class _StatsViewState extends State<_StatsView> {
     );
   }
   Widget _statBox(String lbl, String val, Color c) {
+    final config = Provider.of<ThemeProvider>(context, listen: false).config;
     return Container(
        padding: const EdgeInsets.all(20),
-       decoration: BoxDecoration(color: Colors.white, borderRadius: BorderRadius.circular(32), boxShadow: const [BoxShadow(color: Color.fromRGBO(220, 38, 38, 0.05), blurRadius: 20, spreadRadius: -5, offset: Offset(0, 10))]),
+       decoration: BoxDecoration(color: config.cardColor, borderRadius: BorderRadius.circular(32), boxShadow: [BoxShadow(color: config.primaryAccent.withValues(alpha: 0.05), blurRadius: 20, spreadRadius: -5, offset: Offset(0, 10))]),
        child: Column(
          crossAxisAlignment: CrossAxisAlignment.start,
          mainAxisAlignment: MainAxisAlignment.center,
          children: [
-           Text(lbl.toUpperCase(), style: GoogleFonts.plusJakartaSans(fontSize: 10, fontWeight: FontWeight.w900, color: Colors.grey.shade400)),
+           Text(lbl.toUpperCase(), style: GoogleFonts.plusJakartaSans(fontSize: 10, fontWeight: FontWeight.w900, color: config.textMuted.withValues(alpha: 0.6))),
            const SizedBox(height: 4),
            Text(val, style: GoogleFonts.plusJakartaSans(fontSize: 24, fontWeight: FontWeight.w900, color: c)),
          ],
@@ -1061,6 +1082,8 @@ class _UpcomingEvents extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final themeProv = context.watch<ThemeProvider>();
+    final config = themeProv.config;
     final activeEvents = provider.events.where((e) => e.daysUntil >= 0 && e.daysUntil <= 5).toList();
     activeEvents.sort((a,b) => a.daysUntil.compareTo(b.daysUntil));
 
@@ -1071,25 +1094,25 @@ class _UpcomingEvents extends StatelessWidget {
       children: [
          Padding(
             padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 8),
-            child: Text('UPCOMING EVENTS (< 5 DAYS)', style: GoogleFonts.plusJakartaSans(fontSize: 10, fontWeight: FontWeight.w900, color: Colors.grey.shade500, letterSpacing: 1.5)),
+            child: Text('UPCOMING EVENTS (< 5 DAYS)', style: GoogleFonts.plusJakartaSans(fontSize: 10, fontWeight: FontWeight.w900, color: config.textMuted, letterSpacing: 1.5)),
          ),
          ...activeEvents.map((e) {
            return Container(
              margin: const EdgeInsets.only(bottom: 12),
              padding: const EdgeInsets.all(16),
              decoration: BoxDecoration(
-               color: Colors.white,
+               color: config.cardColor,
                borderRadius: BorderRadius.circular(24),
-               border: Border.all(color: Colors.red.shade100)
+               border: Border.all(color: config.primaryAccent.withValues(alpha: 0.2))
              ),
              child: Row(
                children: [
-                 Icon(e.eventType == 'birthday' ? Icons.cake : Icons.event, color: _primaryRed),
+                 Icon(e.eventType == 'birthday' ? Icons.cake : Icons.event, color: config.primaryAccent),
                  const SizedBox(width: 16),
                  Expanded(
-                   child: Text(e.name, style: GoogleFonts.plusJakartaSans(fontSize: 14, fontWeight: FontWeight.w900, color: _textDark)),
+                   child: Text(e.name, style: GoogleFonts.plusJakartaSans(fontSize: 14, fontWeight: FontWeight.w900, color: config.textMain)),
                  ),
-                 Text(e.daysUntil == 0 ? "TODAY" : "IN ${e.daysUntil} DAYS", style: GoogleFonts.plusJakartaSans(fontSize: 10, fontWeight: FontWeight.bold, color: _primaryRed))
+                 Text(e.daysUntil == 0 ? "TODAY" : "IN ${e.daysUntil} DAYS", style: GoogleFonts.plusJakartaSans(fontSize: 10, fontWeight: FontWeight.bold, color: config.primaryAccent))
                ]
              )
            );
@@ -1135,6 +1158,8 @@ class _AnimatedXPState extends State<_AnimatedXP> with SingleTickerProviderState
 
   @override
   Widget build(BuildContext context) {
+    final themeProv = context.watch<ThemeProvider>();
+    final config = themeProv.config;
     return AnimatedBuilder(
       animation: _ctrl,
       builder: (ctx, child) {
@@ -1143,7 +1168,7 @@ class _AnimatedXPState extends State<_AnimatedXP> with SingleTickerProviderState
           top: widget.startOffset.dy + _dy.value - 20,
           child: Opacity(
             opacity: _op.value,
-            child: Text('+${widget.amount} XP', style: GoogleFonts.plusJakartaSans(fontSize: 16, fontWeight: FontWeight.w900, color: _primaryRed, shadows: [const Shadow(color: Colors.white, blurRadius: 4)])),
+            child: Text('+${widget.amount} XP', style: GoogleFonts.plusJakartaSans(fontSize: 16, fontWeight: FontWeight.w900, color: config.primaryAccent, shadows: [Shadow(color: config.cardColor, blurRadius: 4)])),
           ),
         );
       },

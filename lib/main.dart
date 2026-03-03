@@ -8,6 +8,7 @@ import 'logic/timetable_provider.dart';
 import 'logic/life_provider.dart';
 import 'logic/expense_provider.dart'; // New
 import 'logic/syllabus_provider.dart'; // New
+import 'logic/theme_provider.dart'; // New
 
 import 'screens/timetable_screen.dart';
 import 'screens/life_os_screen.dart';
@@ -42,20 +43,28 @@ class StudentLifeOS extends StatelessWidget {
   Widget build(BuildContext context) {
     return MultiProvider(
       providers: [
+        ChangeNotifierProvider(create: (_) => ThemeProvider()),
         ChangeNotifierProvider(create: (_) => TimetableProvider()),
         ChangeNotifierProvider(create: (_) => LifeProvider()),
         ChangeNotifierProvider(create: (_) => ExpenseProvider()), // New
         ChangeNotifierProvider(create: (_) => SyllabusProvider()), // New
       ],
-      child: MaterialApp(
-        title: 'Student OS',
-        debugShowCheckedModeBanner: false,
-        theme: ThemeData(
-          useMaterial3: true,
-          colorSchemeSeed: Colors.red,
-          scaffoldBackgroundColor: const Color(0xFFF5F5F7),
-        ),
-        home: const MainDashboard(),
+      child: Consumer<ThemeProvider>(
+        builder: (context, themeProv, child) {
+          if (!themeProv.isInit) return const MaterialApp(home: Scaffold(body: Center(child: CircularProgressIndicator())));
+          final config = themeProv.config;
+          return MaterialApp(
+            title: 'Student OS',
+            debugShowCheckedModeBanner: false,
+            theme: ThemeData(
+              useMaterial3: true,
+              brightness: config.brightness,
+              colorSchemeSeed: config.seedColor,
+              scaffoldBackgroundColor: config.scaffoldBg,
+            ),
+            home: const MainDashboard(),
+          );
+        },
       ),
     );
   }
@@ -81,13 +90,16 @@ class _MainDashboardState extends State<MainDashboard> {
       const SyllabusScreen(),
     ];
 
+    final themeProv = context.watch<ThemeProvider>();
+    final config = themeProv.config;
+
     return Scaffold(
       body: screens[_index],
       bottomNavigationBar: NavigationBar(
-        backgroundColor: Colors.white,
+        backgroundColor: config.navBarBg,
         selectedIndex: _index,
         onDestinationSelected: (i) => setState(() => _index = i),
-        indicatorColor: Colors.red.shade600,
+        indicatorColor: config.navIndicatorBg,
         destinations: const [
           NavigationDestination(icon: Icon(Icons.analytics_outlined), selectedIcon: Icon(Icons.analytics), label: 'Status'),
           NavigationDestination(icon: Icon(Icons.calendar_month), label: 'Timetable'),

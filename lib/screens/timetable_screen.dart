@@ -3,13 +3,9 @@ import 'package:flutter/services.dart';
 import 'package:provider/provider.dart';
 import 'package:google_fonts/google_fonts.dart';
 import '../logic/timetable_provider.dart';
+import '../logic/theme_provider.dart';
 import '../data/models.dart';
 
-const _bgPrimary = Color(0xFFFEF2F2);
-const _textPrimary = Color(0xFF111827);
-const _gradStart = Color(0xFFEF4444);
-const _gradEnd = Color(0xFF991B1B);
-const _red600 = Color(0xFFDC2626);
 
 class TimetableScreen extends StatefulWidget {
   const TimetableScreen({super.key});
@@ -30,19 +26,21 @@ class _TimetableScreenState extends State<TimetableScreen> with SingleTickerProv
 
   @override
   Widget build(BuildContext context) {
+    final themeProv = context.watch<ThemeProvider>();
+    final config = themeProv.config;
     final provider = context.watch<TimetableProvider>();
 
     return Scaffold(
-      backgroundColor: _bgPrimary,
+      backgroundColor: config.bgPrimary,
       body: SafeArea(
         child: Column(
           children: [
             // Floating Custom Header
             Container(
               padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 20),
-              decoration: const BoxDecoration(
-                color: Colors.white,
-                border: Border(bottom: BorderSide(color: Color(0xFFF3F4F6))),
+              decoration: BoxDecoration(
+                color: config.cardColor,
+                border: Border(bottom: BorderSide(color: config.softBg)),
               ),
               child: Row(
                 mainAxisAlignment: MainAxisAlignment.spaceBetween,
@@ -50,8 +48,8 @@ class _TimetableScreenState extends State<TimetableScreen> with SingleTickerProv
                   Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
-                      Text('Life OS', style: GoogleFonts.plusJakartaSans(fontSize: 20, fontWeight: FontWeight.w800, color: _textPrimary, letterSpacing: -0.5)),
-                      Text('TIMETABLE', style: GoogleFonts.plusJakartaSans(fontSize: 10, fontWeight: FontWeight.w900, color: _red600, letterSpacing: 1.5)),
+                      Text('Life OS', style: GoogleFonts.plusJakartaSans(fontSize: 20, fontWeight: FontWeight.w800, color: config.textMain, letterSpacing: -0.5)),
+                      Text('TIMETABLE', style: GoogleFonts.plusJakartaSans(fontSize: 10, fontWeight: FontWeight.w900, color: config.primaryAccent, letterSpacing: 1.5)),
                     ],
                   ),
                   Row(
@@ -61,15 +59,15 @@ class _TimetableScreenState extends State<TimetableScreen> with SingleTickerProv
                         child: Container(
                           padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
                           decoration: BoxDecoration(
-                            color: Colors.red.shade50,
+                            color: config.softBg,
                             borderRadius: BorderRadius.circular(16),
-                            border: Border.all(color: Colors.red.shade100),
+                            border: Border.all(color: config.primaryAccent.withValues(alpha: 0.2)),
                           ),
                           child: Row(
                             children: [
-                              const Icon(Icons.smart_toy, size: 12, color: _red600),
+                              Icon(Icons.smart_toy, size: 12, color: config.primaryAccent),
                               const SizedBox(width: 6),
-                              Text('AI SYNC', style: GoogleFonts.plusJakartaSans(fontSize: 10, fontWeight: FontWeight.w900, color: _red600)),
+                              Text('AI SYNC', style: GoogleFonts.plusJakartaSans(fontSize: 10, fontWeight: FontWeight.w900, color: config.primaryAccent)),
                             ],
                           ),
                         ),
@@ -82,19 +80,19 @@ class _TimetableScreenState extends State<TimetableScreen> with SingleTickerProv
             
             // Tab Bar
             Container(
-              color: Colors.white,
+              color: config.cardColor,
               child: TabBar(
                 controller: _tabController,
                 isScrollable: true,
                 padding: const EdgeInsets.symmetric(vertical: 8),
                 indicator: BoxDecoration(
-                  color: _red600,
+                  color: config.primaryAccent,
                   borderRadius: BorderRadius.circular(20),
-                  boxShadow: [BoxShadow(color: Colors.red.shade200, blurRadius: 8, offset: const Offset(0, 4))],
+                  boxShadow: [BoxShadow(color: config.primaryAccent.withValues(alpha: 0.3), blurRadius: 8, offset: const Offset(0, 4))],
                 ),
                 indicatorSize: TabBarIndicatorSize.tab,
-                labelColor: Colors.white,
-                unselectedLabelColor: Colors.grey.shade500,
+                labelColor: config.cardColor,
+                unselectedLabelColor: config.textMuted,
                 labelStyle: GoogleFonts.plusJakartaSans(fontSize: 12, fontWeight: FontWeight.w900, letterSpacing: 0.5),
                 unselectedLabelStyle: GoogleFonts.plusJakartaSans(fontSize: 12, fontWeight: FontWeight.bold),
                 tabAlignment: TabAlignment.start,
@@ -127,10 +125,10 @@ class _TimetableScreenState extends State<TimetableScreen> with SingleTickerProv
       ),
       floatingActionButton: FloatingActionButton(
         onPressed: () => _showManualAdd(context, provider),
-        backgroundColor: _red600,
+        backgroundColor: config.primaryAccent,
         shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(32)),
         elevation: 8,
-        child: const Icon(Icons.add, color: Colors.white),
+        child: Icon(Icons.add, color: config.cardColor),
       ),
     );
   }
@@ -138,17 +136,18 @@ class _TimetableScreenState extends State<TimetableScreen> with SingleTickerProv
   // --- DIALOGS ---
 
   void _showAiHelper(BuildContext context, TimetableProvider provider) {
+    final config = Provider.of<ThemeProvider>(context, listen: false).config;
     final controller = TextEditingController();
     showDialog(
       context: context,
       builder: (_) => AlertDialog(
-        title: const Text("AI Auto-Import"),
+        title: Text("AI Auto-Import"),
         content: Column(
           mainAxisSize: MainAxisSize.min,
           children: [
-            const Text(
+            Text(
               "1. Copy Prompt.\n2. Paste in ChatGPT with your timetable image.\n3. Paste the JSON result here.",
-              style: TextStyle(fontSize: 12, color: Colors.grey),
+              style: TextStyle(fontSize: 12, color: config.textMuted),
             ),
             const SizedBox(height: 10),
             FilledButton.icon(
@@ -157,28 +156,28 @@ class _TimetableScreenState extends State<TimetableScreen> with SingleTickerProv
                     text: "Convert this timetable image to a JSON array. Fields: title, location, day (e.g. Monday), startTime (HH:MM), endTime (HH:MM), type (class/exam/event)."));
                 ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text("Prompt copied to clipboard!")));
               },
-              icon: const Icon(Icons.copy, size: 16),
-              label: const Text("Copy Prompt"),
-              style: FilledButton.styleFrom(backgroundColor: Colors.red.shade600),
+              icon: Icon(Icons.copy, size: 16),
+              label: Text("Copy Prompt"),
+              style: FilledButton.styleFrom(backgroundColor: config.primaryAccent),
             ),
             const SizedBox(height: 10),
             TextField(
               controller: controller,
-              decoration: const InputDecoration(border: OutlineInputBorder(), hintText: "Paste JSON here"),
+              decoration: InputDecoration(border: OutlineInputBorder(), hintText: "Paste JSON here"),
               maxLines: 5,
             ),
           ],
         ),
         actions: [
-          TextButton(onPressed: () => Navigator.pop(context), child: const Text("Cancel")),
+          TextButton(onPressed: () => Navigator.pop(context), child: Text("Cancel")),
           FilledButton(
             onPressed: () {
               final res = provider.importJson(controller.text);
               Navigator.pop(context);
               ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(res)));
             },
-            style: FilledButton.styleFrom(backgroundColor: Colors.red.shade600),
-            child: const Text("Import"),
+            style: FilledButton.styleFrom(backgroundColor: config.primaryAccent),
+            child: Text("Import"),
           )
         ],
       ),
@@ -186,6 +185,7 @@ class _TimetableScreenState extends State<TimetableScreen> with SingleTickerProv
   }
 
   void _showManualAdd(BuildContext context, TimetableProvider provider) {
+    final config = Provider.of<ThemeProvider>(context, listen: false).config;
     final titleCtrl = TextEditingController();
     final locCtrl = TextEditingController();
     int selectedDay = DateTime.now().weekday;
@@ -205,19 +205,19 @@ class _TimetableScreenState extends State<TimetableScreen> with SingleTickerProv
               padding: const EdgeInsets.all(16),
               child: Column(mainAxisSize: MainAxisSize.min, children: [
                 Row(mainAxisAlignment: MainAxisAlignment.spaceBetween, children: [
-                  const Text("Add Class", style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold)),
-                  IconButton(onPressed: () => Navigator.pop(ctx2), icon: const Icon(Icons.close))
+                  Text("Add Class", style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold)),
+                  IconButton(onPressed: () => Navigator.pop(ctx2), icon: Icon(Icons.close))
                 ]),
                 const SizedBox(height: 8),
-                TextField(controller: titleCtrl, decoration: const InputDecoration(labelText: "Subject")),
+                TextField(controller: titleCtrl, decoration: InputDecoration(labelText: "Subject")),
                 const SizedBox(height: 8),
-                TextField(controller: locCtrl, decoration: const InputDecoration(labelText: "Location")),
+                TextField(controller: locCtrl, decoration: InputDecoration(labelText: "Location")),
                 const SizedBox(height: 8),
                 Row(children: [
                   Expanded(
                     child: DropdownButtonFormField<int>(
                       initialValue: selectedDay,
-                      decoration: const InputDecoration(labelText: 'Day'),
+                      decoration: InputDecoration(labelText: 'Day'),
                       items: const [
                         DropdownMenuItem(value: 1, child: Text('Mon')),
                         DropdownMenuItem(value: 2, child: Text('Tue')),
@@ -234,7 +234,7 @@ class _TimetableScreenState extends State<TimetableScreen> with SingleTickerProv
                   Expanded(
                     child: DropdownButtonFormField<String>(
                       initialValue: type,
-                      decoration: const InputDecoration(labelText: 'Type'),
+                      decoration: InputDecoration(labelText: 'Type'),
                       items: const [
                         DropdownMenuItem(value: 'class', child: Text('Class')),
                         DropdownMenuItem(value: 'exam', child: Text('Exam')),
@@ -288,8 +288,8 @@ class _TimetableScreenState extends State<TimetableScreen> with SingleTickerProv
                         ));
                         Navigator.pop(ctx2);
                       },
-                      style: FilledButton.styleFrom(backgroundColor: Colors.red.shade600),
-                      child: const Text('Save'),
+                      style: FilledButton.styleFrom(backgroundColor: config.primaryAccent),
+                      child: Text('Save'),
                     ),
                   ),
                 ])
@@ -329,6 +329,8 @@ class _DayScheduleViewState extends State<_DayScheduleView> {
 
   @override
   Widget build(BuildContext context) {
+    final themeProv = context.watch<ThemeProvider>();
+    final config = themeProv.config;
     final day = widget.day;
     final provider = widget.provider;
     final bool isToday = day == DateTime.now().weekday;
@@ -368,10 +370,10 @@ class _DayScheduleViewState extends State<_DayScheduleView> {
                         child: Container(
                           height: 120,
                           decoration: BoxDecoration(
-                            color: Colors.white,
+                            color: config.cardColor,
                             borderRadius: BorderRadius.circular(32),
-                            border: Border.all(color: Colors.white, width: 2),
-                            boxShadow: const [BoxShadow(color: Color.fromRGBO(220, 38, 38, 0.12), blurRadius: 30, spreadRadius: -10, offset: Offset(0, 15))],
+                            border: Border.all(color: config.cardColor, width: 2),
+                            boxShadow: [BoxShadow(color: Color.fromRGBO(220, 38, 38, 0.12), blurRadius: 30, spreadRadius: -10, offset: Offset(0, 15))],
                           ),
                           child: Column(
                             crossAxisAlignment: CrossAxisAlignment.start,
@@ -381,21 +383,21 @@ class _DayScheduleViewState extends State<_DayScheduleView> {
                                 child: Row(
                                   mainAxisAlignment: MainAxisAlignment.spaceBetween,
                                   children: [
-                                    Text('UPCOMING', style: GoogleFonts.plusJakartaSans(fontSize: 10, fontWeight: FontWeight.w900, color: Colors.grey.shade400, letterSpacing: 1.5)),
+                                    Text('UPCOMING', style: GoogleFonts.plusJakartaSans(fontSize: 10, fontWeight: FontWeight.w900, color: config.textMuted.withValues(alpha: 0.6), letterSpacing: 1.5)),
                                     if (provider.getNowAndNext()['next'] != null)
-                                      Text(provider.getTimeToNextClass(), style: GoogleFonts.plusJakartaSans(fontSize: 10, fontWeight: FontWeight.bold, color: _red600)),
+                                      Text(provider.getTimeToNextClass(), style: GoogleFonts.plusJakartaSans(fontSize: 10, fontWeight: FontWeight.bold, color: config.primaryAccent)),
                                   ],
                                 ),
                               ),
                               Expanded(
                                 child: ClipRRect(
-                                  borderRadius: const BorderRadius.vertical(bottom: Radius.circular(32)),
+                                  borderRadius: BorderRadius.vertical(bottom: Radius.circular(32)),
                                   child: Container(
                                     color: Colors.transparent,
                                     child: upcoming.isEmpty
                                         ? Padding(
                                             padding: const EdgeInsets.symmetric(horizontal: 16),
-                                            child: Text('Free time ✨', style: GoogleFonts.plusJakartaSans(color: Colors.grey.shade400, fontSize: 13, fontWeight: FontWeight.bold)),
+                                            child: Text('Free time ✨', style: GoogleFonts.plusJakartaSans(color: config.textMuted.withValues(alpha: 0.6), fontSize: 13, fontWeight: FontWeight.bold)),
                                           )
                                         : SingleChildScrollView(
                                             scrollDirection: Axis.horizontal,
@@ -409,17 +411,17 @@ class _DayScheduleViewState extends State<_DayScheduleView> {
                                                       key: ValueKey('upcoming-${item.id}'),
                                                       direction: DismissDirection.up,
                                                       background: Container(
-                                                        decoration: BoxDecoration(color: _red600, borderRadius: BorderRadius.circular(24)),
+                                                        decoration: BoxDecoration(color: config.primaryAccent, borderRadius: BorderRadius.circular(24)),
                                                         alignment: Alignment.center,
-                                                        child: const Icon(Icons.delete, color: Colors.white),
+                                                        child: Icon(Icons.delete, color: config.cardColor),
                                                       ),
                                                       confirmDismiss: (_) async {
                                                         final res = await showDialog<bool>(context: context, builder: (ctx) => AlertDialog(
-                                                          title: const Text('Delete'),
-                                                          content: const Text('Remove this class?'),
+                                                          title: Text('Delete'),
+                                                          content: Text('Remove this class?'),
                                                           actions: [
-                                                            TextButton(onPressed: () => Navigator.pop(ctx, false), child: const Text('Cancel')),
-                                                            FilledButton(onPressed: () => Navigator.pop(ctx, true), style: FilledButton.styleFrom(backgroundColor: _red600), child: const Text('Delete')),
+                                                            TextButton(onPressed: () => Navigator.pop(ctx, false), child: Text('Cancel')),
+                                                            FilledButton(onPressed: () => Navigator.pop(ctx, true), style: FilledButton.styleFrom(backgroundColor: config.primaryAccent), child: Text('Delete')),
                                                           ],
                                                         ));
                                                         return res ?? false;
@@ -454,7 +456,7 @@ class _DayScheduleViewState extends State<_DayScheduleView> {
                   children: [
                     Text(
                       "TODAY'S SCHEDULE", 
-                      style: GoogleFonts.plusJakartaSans(fontSize: 10, fontWeight: FontWeight.w900, color: Colors.grey.shade500, letterSpacing: 1.5)
+                      style: GoogleFonts.plusJakartaSans(fontSize: 10, fontWeight: FontWeight.w900, color: config.textMuted, letterSpacing: 1.5)
                     ),
                     if (items.isNotEmpty)
                       Container(
@@ -494,14 +496,14 @@ class _DayScheduleViewState extends State<_DayScheduleView> {
                           ),
                           child: Row(
                             children: [
-                              const Icon(Icons.restaurant, color: Colors.green),
+                              Icon(Icons.restaurant, color: Colors.green),
                               const SizedBox(width: 12),
                               Expanded(
                                 child: Column(
                                   crossAxisAlignment: CrossAxisAlignment.start,
-                                  children: const [
+                                  children: [
                                     Text("Lunch Break!", style: TextStyle(fontWeight: FontWeight.bold, color: Colors.green)),
-                                    Text("12 PM - 3 PM Gap detected.", style: TextStyle(color: Colors.black87, fontSize: 12)),
+                                    Text("12 PM - 3 PM Gap detected.", style: TextStyle(color: config.textMain.withValues(alpha: 0.87), fontSize: 12)),
                                   ],
                                 ),
                               ),
@@ -518,13 +520,13 @@ class _DayScheduleViewState extends State<_DayScheduleView> {
                                children: [
                                  Container(
                                    padding: const EdgeInsets.all(24),
-                                   decoration: BoxDecoration(color: Colors.white, shape: BoxShape.circle, boxShadow: [BoxShadow(color: Colors.black.withValues(alpha: 0.05), blurRadius: 20)]),
-                                   child: const Icon(Icons.celebration_rounded, size: 48, color: _red600),
+                                   decoration: BoxDecoration(color: config.cardColor, shape: BoxShape.circle, boxShadow: [BoxShadow(color: config.textMain.withValues(alpha: 0.05), blurRadius: 20)]),
+                                   child: Icon(Icons.celebration_rounded, size: 48, color: config.primaryAccent),
                                  ),
                                  const SizedBox(height: 20),
-                                 Text("No classes today!", style: GoogleFonts.plusJakartaSans(fontSize: 18, fontWeight: FontWeight.w900, color: Colors.grey.shade800)),
+                                 Text("No classes today!", style: GoogleFonts.plusJakartaSans(fontSize: 18, fontWeight: FontWeight.w900, color: config.textMain)),
                                  const SizedBox(height: 4),
-                                 Text("Enjoy your free time.", style: GoogleFonts.plusJakartaSans(color: Colors.grey.shade500, fontWeight: FontWeight.w600)),
+                                 Text("Enjoy your free time.", style: GoogleFonts.plusJakartaSans(color: config.textMuted, fontWeight: FontWeight.w600)),
                                ],
                              ),
                            ),
@@ -557,9 +559,9 @@ class _DayScheduleViewState extends State<_DayScheduleView> {
                      child: Center(
                        child: Column(
                          children: [
-                           Icon(Icons.event_busy, size: 48, color: Colors.grey.shade300),
+                           Icon(Icons.event_busy, size: 48, color: config.textMuted.withValues(alpha: 0.4)),
                            const SizedBox(height: 10),
-                           const Text("No classes scheduled.", style: TextStyle(color: Colors.grey)),
+                           Text("No classes scheduled.", style: TextStyle(color: config.textMuted)),
                          ],
                        ),
                      ),
@@ -587,21 +589,23 @@ class _StatusCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final themeProv = context.watch<ThemeProvider>();
+    final config = themeProv.config;
     return Container(
       height: 120,
       decoration: BoxDecoration(
-        color: isActive ? null : Colors.white,
-        gradient: isActive ? const LinearGradient(colors: [_gradStart, _gradEnd], begin: Alignment.topLeft, end: Alignment.bottomRight) : null,
+        color: isActive ? null : config.cardColor,
+        gradient: isActive ? LinearGradient(colors: [config.gradStart, config.gradEnd], begin: Alignment.topLeft, end: Alignment.bottomRight) : null,
         borderRadius: BorderRadius.circular(32),
-        boxShadow: isActive ? const [BoxShadow(color: Color.fromRGBO(220, 38, 38, 0.3), blurRadius: 30, spreadRadius: -10, offset: Offset(0, 15))] : const [BoxShadow(color: Color.fromRGBO(220, 38, 38, 0.05), blurRadius: 20, spreadRadius: -10, offset: Offset(0, 10))],
-        border: Border.all(color: Colors.white, width: 2),
+        boxShadow: isActive ? [BoxShadow(color: Color.fromRGBO(220, 38, 38, 0.3), blurRadius: 30, spreadRadius: -10, offset: Offset(0, 15))] : [BoxShadow(color: Color.fromRGBO(220, 38, 38, 0.05), blurRadius: 20, spreadRadius: -10, offset: Offset(0, 10))],
+        border: Border.all(color: config.cardColor, width: 2),
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           Padding(
             padding: const EdgeInsets.only(left: 16, top: 12, right: 16, bottom: 4),
-            child: Text(title, style: GoogleFonts.plusJakartaSans(color: isActive ? Colors.white70 : Colors.grey.shade400, fontSize: 10, fontWeight: FontWeight.w900, letterSpacing: 1.5)),
+            child: Text(title, style: GoogleFonts.plusJakartaSans(color: isActive ? config.cardColor.withValues(alpha: 0.70) : config.textMuted.withValues(alpha: 0.6), fontSize: 10, fontWeight: FontWeight.w900, letterSpacing: 1.5)),
           ),
           Expanded(
             child: Padding(
@@ -615,7 +619,7 @@ class _StatusCard extends StatelessWidget {
                       mainAxisAlignment: MainAxisAlignment.center,
                       children: [
                         item == null
-                            ? Text(isActive ? "Free Time" : "Nothing later", key: const ValueKey('empty'), style: GoogleFonts.plusJakartaSans(color: isActive ? Colors.white : Colors.grey.shade800, fontSize: 16, fontWeight: FontWeight.w900))
+                            ? Text(isActive ? "Free Time" : "Nothing later", key: const ValueKey('empty'), style: GoogleFonts.plusJakartaSans(color: isActive ? config.cardColor : config.textMain, fontSize: 16, fontWeight: FontWeight.w900))
                             : Column(
                                 key: ValueKey(item!.id),
                                 crossAxisAlignment: CrossAxisAlignment.start,
@@ -625,12 +629,12 @@ class _StatusCard extends StatelessWidget {
                                     item!.title,
                                     maxLines: 1,
                                     overflow: TextOverflow.ellipsis,
-                                    style: GoogleFonts.plusJakartaSans(color: isActive ? Colors.white : Colors.grey.shade800, fontSize: 18, fontWeight: FontWeight.w900),
+                                    style: GoogleFonts.plusJakartaSans(color: isActive ? config.cardColor : config.textMain, fontSize: 18, fontWeight: FontWeight.w900),
                                   ),
                                   const SizedBox(height: 4),
                                   Text(
                                     "${item!.location} • ${_fmt(item!.startHour, item!.startMinute)}",
-                                    style: GoogleFonts.plusJakartaSans(color: isActive ? Colors.white70 : Colors.grey.shade500, fontSize: 11, fontWeight: FontWeight.bold),
+                                    style: GoogleFonts.plusJakartaSans(color: isActive ? config.cardColor.withValues(alpha: 0.70) : config.textMuted, fontSize: 11, fontWeight: FontWeight.bold),
                                   ),
                                 ],
                               ),
@@ -641,8 +645,8 @@ class _StatusCard extends StatelessWidget {
                   if (isActive)
                     Container(
                       padding: const EdgeInsets.all(8),
-                      decoration: BoxDecoration(color: Colors.white.withValues(alpha: 0.2), shape: BoxShape.circle),
-                      child: const Icon(Icons.bolt, color: Colors.white, size: 16),
+                      decoration: BoxDecoration(color: config.cardColor.withValues(alpha: 0.2), shape: BoxShape.circle),
+                      child: Icon(Icons.bolt, color: config.cardColor, size: 16),
                     )
                 ],
               ),
@@ -664,16 +668,18 @@ class _ClassTile extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final themeProv = context.watch<ThemeProvider>();
+    final config = themeProv.config;
     final bool isExam = item.type == 'exam';
-    final Color stripeColor = isExam ? Colors.orange : _red600;
+    final Color stripeColor = isExam ? Colors.orange : config.primaryAccent;
 
     return Container(
       margin: const EdgeInsets.only(bottom: 16),
       decoration: BoxDecoration(
-        color: Colors.white,
+        color: config.cardColor,
         borderRadius: BorderRadius.circular(32),
-        border: Border.all(color: Colors.white, width: 2),
-        boxShadow: const [BoxShadow(color: Color.fromRGBO(220, 38, 38, 0.08), blurRadius: 30, spreadRadius: -10, offset: Offset(0, 15))],
+        border: Border.all(color: config.cardColor, width: 2),
+        boxShadow: [BoxShadow(color: Color.fromRGBO(220, 38, 38, 0.08), blurRadius: 30, spreadRadius: -10, offset: Offset(0, 15))],
       ),
       clipBehavior: Clip.antiAlias,
       child: IntrinsicHeight(
@@ -702,7 +708,7 @@ class _ClassTile extends StatelessWidget {
                             style: GoogleFonts.plusJakartaSans(
                               fontWeight: FontWeight.w900, 
                               fontSize: 18,
-                              color: Colors.grey.shade900
+                              color: config.textMain
                             )
                           ),
                         ),
@@ -715,23 +721,23 @@ class _ClassTile extends StatelessWidget {
                         else
                           Container(
                             padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
-                            decoration: BoxDecoration(color: Colors.red.shade50, borderRadius: BorderRadius.circular(8)),
-                            child: Text(item.type.toUpperCase(), style: GoogleFonts.plusJakartaSans(fontSize: 9, fontWeight: FontWeight.w900, color: _red600, letterSpacing: 1.5)),
+                            decoration: BoxDecoration(color: config.softBg, borderRadius: BorderRadius.circular(8)),
+                            child: Text(item.type.toUpperCase(), style: GoogleFonts.plusJakartaSans(fontSize: 9, fontWeight: FontWeight.w900, color: config.primaryAccent, letterSpacing: 1.5)),
                           )
                       ],
                     ),
                     const SizedBox(height: 12),
                     Row(
                       children: [
-                        Icon(Icons.location_on, size: 14, color: Colors.grey.shade400),
+                        Icon(Icons.location_on, size: 14, color: config.textMuted.withValues(alpha: 0.6)),
                         const SizedBox(width: 4),
                         Flexible(
-                          child: Text(item.location, style: GoogleFonts.plusJakartaSans(color: Colors.grey.shade600, fontSize: 13, fontWeight: FontWeight.bold), maxLines: 1, overflow: TextOverflow.ellipsis),
+                          child: Text(item.location, style: GoogleFonts.plusJakartaSans(color: config.textMuted, fontSize: 13, fontWeight: FontWeight.bold), maxLines: 1, overflow: TextOverflow.ellipsis),
                         ),
                         const SizedBox(width: 12),
-                        Icon(Icons.access_time_filled, size: 14, color: Colors.grey.shade400),
+                        Icon(Icons.access_time_filled, size: 14, color: config.textMuted.withValues(alpha: 0.6)),
                         const SizedBox(width: 4),
-                        Text("${_fmt(item.startHour, item.startMinute)} - ${_fmt(item.endHour, item.endMinute)}", style: GoogleFonts.plusJakartaSans(color: Colors.grey.shade600, fontSize: 13, fontWeight: FontWeight.bold)),
+                        Text("${_fmt(item.startHour, item.startMinute)} - ${_fmt(item.endHour, item.endMinute)}", style: GoogleFonts.plusJakartaSans(color: config.textMuted, fontSize: 13, fontWeight: FontWeight.bold)),
                       ],
                     ),
                   ],
@@ -742,17 +748,17 @@ class _ClassTile extends StatelessWidget {
             // Only show Attendance check if the class has passed or started
             if (_hasStarted(item))
               Container(
-                decoration: BoxDecoration(border: Border(left: BorderSide(color: Colors.grey.shade100))),
+                decoration: BoxDecoration(border: Border(left: BorderSide(color: config.softBg))),
                 child: Column(
                   mainAxisAlignment: MainAxisAlignment.center,
                   children: [
                     IconButton(
-                      icon: Icon(Icons.check_circle, size: 28, color: item.attended == true ? Colors.green : Colors.grey.shade200),
+                      icon: Icon(Icons.check_circle, size: 28, color: item.attended == true ? Colors.green : config.textMuted.withValues(alpha: 0.2)),
                       onPressed: () => provider.toggleAttendance(item, true),
                       tooltip: "Attended",
                     ),
                     IconButton(
-                      icon: Icon(Icons.cancel, size: 28, color: item.attended == false ? Colors.red : Colors.grey.shade200),
+                      icon: Icon(Icons.cancel, size: 28, color: item.attended == false ? config.primaryAccent : config.textMuted.withValues(alpha: 0.2)),
                       onPressed: () => provider.toggleAttendance(item, false),
                       tooltip: "Missed",
                     ),
@@ -763,15 +769,15 @@ class _ClassTile extends StatelessWidget {
                Container(
                  padding: const EdgeInsets.symmetric(horizontal: 16),
                  child: IconButton(
-                   icon: const Icon(Icons.delete_outline, size: 24, color: _red600),
+                   icon: Icon(Icons.delete_outline, size: 24, color: config.primaryAccent),
                    onPressed: () async {
                      final messenger = ScaffoldMessenger.of(context);
                      final res = await showDialog<bool>(context: context, builder: (ctx) => AlertDialog(
-                       title: const Text('Delete item'),
-                       content: const Text('Remove this item from timetable?'),
+                       title: Text('Delete item'),
+                       content: Text('Remove this item from timetable?'),
                        actions: [
-                         TextButton(onPressed: () => Navigator.pop(ctx, false), child: const Text('Cancel')),
-                         FilledButton(onPressed: () => Navigator.pop(ctx, true), style: FilledButton.styleFrom(backgroundColor: _red600), child: const Text('Delete')),
+                         TextButton(onPressed: () => Navigator.pop(ctx, false), child: Text('Cancel')),
+                         FilledButton(onPressed: () => Navigator.pop(ctx, true), style: FilledButton.styleFrom(backgroundColor: config.primaryAccent), child: Text('Delete')),
                        ],
                      ));
                      if (res == true) {
@@ -814,12 +820,14 @@ class _UpcomingTile extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final themeProv = context.watch<ThemeProvider>();
+    final config = themeProv.config;
     final start = _fmt(item.startHour, item.startMinute);
     return Container(
       width: 150,
       height: 72,
       decoration: BoxDecoration(
-        color: Colors.grey.shade50,
+        color: config.softBg,
         borderRadius: BorderRadius.circular(24),
       ),
       child: Padding(
@@ -831,13 +839,13 @@ class _UpcomingTile extends StatelessWidget {
             Row(
               children: [
                 Expanded(
-                  child: Text(item.title, style: GoogleFonts.plusJakartaSans(fontWeight: FontWeight.w900, fontSize: 14, color: Colors.grey.shade800), maxLines: 1, overflow: TextOverflow.ellipsis),
+                  child: Text(item.title, style: GoogleFonts.plusJakartaSans(fontWeight: FontWeight.w900, fontSize: 14, color: config.textMain), maxLines: 1, overflow: TextOverflow.ellipsis),
                 ),
                 if (item.type == 'exam') Padding(padding: const EdgeInsets.only(left: 4), child: Icon(Icons.warning_amber_rounded, color: Colors.orange.shade400, size: 14)),
               ],
             ),
             const SizedBox(height: 4),
-            Text(start, style: GoogleFonts.plusJakartaSans(color: Colors.grey.shade500, fontSize: 11, fontWeight: FontWeight.bold), maxLines: 1, overflow: TextOverflow.ellipsis),
+            Text(start, style: GoogleFonts.plusJakartaSans(color: config.textMuted, fontSize: 11, fontWeight: FontWeight.bold), maxLines: 1, overflow: TextOverflow.ellipsis),
           ],
         ),
       ),
