@@ -550,7 +550,6 @@ class DashboardScreen extends StatelessWidget {
   }
 
   Widget _buildThemeSelector(BuildContext context, ThemeProvider themeProv, ThemeConfig config) {
-    final config = Provider.of<ThemeProvider>(context, listen: false).config;
     return Container(
       padding: const EdgeInsets.all(24),
       decoration: BoxDecoration(
@@ -561,7 +560,7 @@ class DashboardScreen extends StatelessWidget {
         mainAxisSize: MainAxisSize.min,
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Text('Theme Settings', style: GoogleFonts.plusJakartaSans(fontSize: 20, fontWeight: FontWeight.bold, color: config.textMain)),
+          Text('Settings', style: GoogleFonts.plusJakartaSans(fontSize: 20, fontWeight: FontWeight.bold, color: config.textMain)),
           const SizedBox(height: 16),
           ListTile(
             leading: Icon(Icons.light_mode, color: themeProv.mode == AppThemeMode.light ? config.primaryAccent : config.textMuted),
@@ -590,7 +589,49 @@ class DashboardScreen extends StatelessWidget {
               Navigator.pop(context);
             },
           ),
+          const Divider(),
+          ListTile(
+            leading: Icon(Icons.help_outline, color: config.primaryAccent),
+            title: Text('Help & Support', style: TextStyle(color: config.textMain, fontWeight: FontWeight.bold)),
+            onTap: () {
+              Navigator.pop(context);
+              _showHelpDialog(context, config);
+            },
+          ),
           const SizedBox(height: 24),
+        ],
+      ),
+    );
+  }
+
+  void _showHelpDialog(BuildContext context, ThemeConfig config) {
+    showDialog(
+      context: context,
+      builder: (ctx) => AlertDialog(
+        backgroundColor: config.cardColor,
+        title: Text("Help & Support", style: TextStyle(color: config.textMain, fontWeight: FontWeight.bold)),
+        content: SingleChildScrollView(
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Text("• Dashboard: View your overall progress and financial snapshot.", style: TextStyle(color: config.textMuted)),
+              const SizedBox(height: 8),
+              Text("• Timetable: Manage your daily classes and exams. Tap any class to edit or delete it.", style: TextStyle(color: config.textMuted)),
+              const SizedBox(height: 8),
+              Text("• Life OS: Track your goals, tasks, and quests to level up your Life OS Rank.", style: TextStyle(color: config.textMuted)),
+              const SizedBox(height: 8),
+              Text("• Expenses: Keep track of your spending, investments, and debts.", style: TextStyle(color: config.textMuted)),
+              const SizedBox(height: 8),
+              Text("• Syllabus: Monitor your academic progress and predict your SGPA.", style: TextStyle(color: config.textMuted)),
+            ],
+          ),
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(ctx),
+            child: Text("Close", style: TextStyle(color: config.primaryAccent)),
+          ),
         ],
       ),
     );

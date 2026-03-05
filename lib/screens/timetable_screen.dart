@@ -22,6 +22,42 @@ class _TimetableScreenState extends State<TimetableScreen> with SingleTickerProv
     super.initState();
     // Start on the current day (Monday = 0, so weekday - 1)
     _tabController = TabController(length: 7, vsync: this, initialIndex: DateTime.now().weekday - 1);
+    
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      final provider = Provider.of<TimetableProvider>(context, listen: false);
+      if (provider.checkWeeklyResetNeeded()) {
+        _showWeeklyResetDialog(provider);
+      }
+    });
+  }
+
+  void _showWeeklyResetDialog(TimetableProvider provider) {
+    final config = Provider.of<ThemeProvider>(context, listen: false).config;
+    showDialog(
+      context: context,
+      barrierDismissible: false,
+      builder: (ctx) => AlertDialog(
+        title: Text("New Week Started!"),
+        content: Text("A new week has begun. Do you want to keep last week's timetable or clear it and start fresh?"),
+        actions: [
+          TextButton(
+            onPressed: () {
+              provider.confirmWeeklyReset(false); // Keep items, clear attendance
+              Navigator.pop(ctx);
+            },
+            child: Text("Keep Previous"),
+          ),
+          FilledButton(
+            onPressed: () {
+              provider.confirmWeeklyReset(true); // Clear items
+              Navigator.pop(ctx);
+            },
+            style: FilledButton.styleFrom(backgroundColor: config.primaryAccent),
+            child: Text("Clear Timetable"),
+          ),
+        ],
+      ),
+    );
   }
 
   @override
@@ -124,7 +160,7 @@ class _TimetableScreenState extends State<TimetableScreen> with SingleTickerProv
         ),
       ),
       floatingActionButton: FloatingActionButton(
-        onPressed: () => _showManualAdd(context, provider),
+        onPressed: () => showAddEditClassSheet(context, provider),
         backgroundColor: config.primaryAccent,
         shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(32)),
         elevation: 8,
@@ -184,122 +220,151 @@ class _TimetableScreenState extends State<TimetableScreen> with SingleTickerProv
     );
   }
 
-  void _showManualAdd(BuildContext context, TimetableProvider provider) {
-    final config = Provider.of<ThemeProvider>(context, listen: false).config;
-    final titleCtrl = TextEditingController();
-    final locCtrl = TextEditingController();
-    int selectedDay = DateTime.now().weekday;
-    TimeOfDay startTime = TimeOfDay.now();
-    TimeOfDay endTime = TimeOfDay(hour: (TimeOfDay.now().hour + 1) % 24, minute: TimeOfDay.now().minute);
-    String type = 'class';
+}
 
-    showModalBottomSheet(
-      context: context,
-      isScrollControlled: true,
-      shape: const RoundedRectangleBorder(borderRadius: BorderRadius.vertical(top: Radius.circular(16))),
-      builder: (ctx) {
-        return Padding(
-          padding: EdgeInsets.only(bottom: MediaQuery.of(ctx).viewInsets.bottom),
-          child: StatefulBuilder(builder: (ctx2, setState) {
-            return Padding(
-              padding: const EdgeInsets.all(16),
-              child: Column(mainAxisSize: MainAxisSize.min, children: [
-                Row(mainAxisAlignment: MainAxisAlignment.spaceBetween, children: [
-                  Text("Add Class", style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold)),
-                  IconButton(onPressed: () => Navigator.pop(ctx2), icon: Icon(Icons.close))
-                ]),
-                const SizedBox(height: 8),
-                TextField(controller: titleCtrl, decoration: InputDecoration(labelText: "Subject")),
-                const SizedBox(height: 8),
-                TextField(controller: locCtrl, decoration: InputDecoration(labelText: "Location")),
-                const SizedBox(height: 8),
-                Row(children: [
-                  Expanded(
-                    child: DropdownButtonFormField<int>(
-                      initialValue: selectedDay,
-                      decoration: InputDecoration(labelText: 'Day'),
-                      items: const [
-                        DropdownMenuItem(value: 1, child: Text('Mon')),
-                        DropdownMenuItem(value: 2, child: Text('Tue')),
-                        DropdownMenuItem(value: 3, child: Text('Wed')),
-                        DropdownMenuItem(value: 4, child: Text('Thu')),
-                        DropdownMenuItem(value: 5, child: Text('Fri')),
-                        DropdownMenuItem(value: 6, child: Text('Sat')),
-                        DropdownMenuItem(value: 7, child: Text('Sun')),
-                      ],
-                      onChanged: (v) { if (v != null) setState(() => selectedDay = v); },
-                    ),
+void showAddEditClassSheet(BuildContext context, TimetableProvider provider, {ScheduleItem? editItem}) {
+  final config = Provider.of<ThemeProvider>(context, listen: false).config;
+  final titleCtrl = TextEditingController(text: editItem?.title ?? '');
+  final locCtrl = TextEditingController(text: editItem?.location ?? '');
+  int selectedDay = editItem?.weekday ?? DateTime.now().weekday;
+  TimeOfDay startTime = editItem != null ? TimeOfDay(hour: editItem.startHour, minute: editItem.startMinute) : TimeOfDay.now();
+  TimeOfDay endTime = editItem != null ? TimeOfDay(hour: editItem.endHour, minute: editItem.endMinute) : TimeOfDay(hour: (TimeOfDay.now().hour + 1) % 24, minute: TimeOfDay.now().minute);
+  String type = editItem?.type ?? 'class';
+
+  showModalBottomSheet(
+    context: context,
+    isScrollControlled: true,
+    shape: const RoundedRectangleBorder(borderRadius: BorderRadius.vertical(top: Radius.circular(16))),
+    builder: (ctx) {
+      return Padding(
+        padding: EdgeInsets.only(bottom: MediaQuery.of(ctx).viewInsets.bottom),
+        child: StatefulBuilder(builder: (ctx2, setState) {
+          return Padding(
+            padding: const EdgeInsets.all(16),
+            child: Column(mainAxisSize: MainAxisSize.min, children: [
+              Row(mainAxisAlignment: MainAxisAlignment.spaceBetween, children: [
+                Text(editItem == null ? "Add Class" : "Edit Class", style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold)),
+                IconButton(onPressed: () => Navigator.pop(ctx2), icon: Icon(Icons.close))
+              ]),
+              const SizedBox(height: 8),
+              TextField(controller: titleCtrl, decoration: InputDecoration(labelText: "Subject")),
+              const SizedBox(height: 8),
+              TextField(controller: locCtrl, decoration: InputDecoration(labelText: "Location")),
+              const SizedBox(height: 8),
+              Row(children: [
+                Expanded(
+                  child: DropdownButtonFormField<int>(
+                    value: selectedDay,
+                    decoration: InputDecoration(labelText: 'Day'),
+                    items: const [
+                      DropdownMenuItem(value: 1, child: Text('Mon')),
+                      DropdownMenuItem(value: 2, child: Text('Tue')),
+                      DropdownMenuItem(value: 3, child: Text('Wed')),
+                      DropdownMenuItem(value: 4, child: Text('Thu')),
+                      DropdownMenuItem(value: 5, child: Text('Fri')),
+                      DropdownMenuItem(value: 6, child: Text('Sat')),
+                      DropdownMenuItem(value: 7, child: Text('Sun')),
+                    ],
+                    onChanged: (v) { if (v != null) setState(() => selectedDay = v); },
                   ),
-                  const SizedBox(width: 12),
-                  Expanded(
-                    child: DropdownButtonFormField<String>(
-                      initialValue: type,
-                      decoration: InputDecoration(labelText: 'Type'),
-                      items: const [
-                        DropdownMenuItem(value: 'class', child: Text('Class')),
-                        DropdownMenuItem(value: 'exam', child: Text('Exam')),
-                        DropdownMenuItem(value: 'event', child: Text('Event')),
-                      ],
-                      onChanged: (v) { if (v != null) setState(() => type = v); },
-                    ),
+                ),
+                const SizedBox(width: 12),
+                Expanded(
+                  child: DropdownButtonFormField<String>(
+                    value: type,
+                    decoration: InputDecoration(labelText: 'Type'),
+                    items: const [
+                      DropdownMenuItem(value: 'class', child: Text('Class')),
+                      DropdownMenuItem(value: 'exam', child: Text('Exam')),
+                      DropdownMenuItem(value: 'event', child: Text('Event')),
+                    ],
+                    onChanged: (v) { if (v != null) setState(() => type = v); },
                   ),
-                ]),
-                const SizedBox(height: 8),
-                Row(children: [
-                  Expanded(
-                    child: OutlinedButton(
-                      onPressed: () async {
-                        final t = await showTimePicker(context: ctx2, initialTime: startTime);
-                        if (t != null) setState(() => startTime = t);
-                      },
-                      child: Text('Start: ${startTime.format(ctx2)}'),
-                    ),
+                ),
+              ]),
+              const SizedBox(height: 8),
+              Row(children: [
+                Expanded(
+                  child: OutlinedButton(
+                    onPressed: () async {
+                      final t = await showTimePicker(context: ctx2, initialTime: startTime);
+                      if (t != null) setState(() => startTime = t);
+                    },
+                    child: Text('Start: ${startTime.format(ctx2)}'),
+                  ),
+                ),
+                const SizedBox(width: 8),
+                Expanded(
+                  child: OutlinedButton(
+                    onPressed: () async {
+                      final t = await showTimePicker(context: ctx2, initialTime: endTime);
+                      if (t != null) setState(() => endTime = t);
+                    },
+                    child: Text('End: ${endTime.format(ctx2)}'),
+                  ),
+                ),
+              ]),
+              const SizedBox(height: 12),
+              Row(children: [
+                if (editItem != null) ...[
+                  IconButton(
+                    onPressed: () async {
+                      final confirmed = await showDialog<bool>(context: context, builder: (ctx) => AlertDialog(
+                        title: Text('Delete Class'),
+                        content: Text('Remove this class from timetable?'),
+                        actions: [
+                          TextButton(onPressed: () => Navigator.pop(ctx, false), child: Text('Cancel')),
+                          FilledButton(onPressed: () => Navigator.pop(ctx, true), style: FilledButton.styleFrom(backgroundColor: config.primaryAccent), child: Text('Delete')),
+                        ],
+                      ));
+                      if (confirmed == true) {
+                        provider.deleteItem(editItem);
+                        if (context.mounted) Navigator.pop(ctx2);
+                      }
+                    },
+                    icon: const Icon(Icons.delete_outline, color: Colors.red),
                   ),
                   const SizedBox(width: 8),
-                  Expanded(
-                    child: OutlinedButton(
-                      onPressed: () async {
-                        final t = await showTimePicker(context: ctx2, initialTime: endTime);
-                        if (t != null) setState(() => endTime = t);
-                      },
-                      child: Text('End: ${endTime.format(ctx2)}'),
-                    ),
+                ],
+                Expanded(
+                  child: FilledButton(
+                    onPressed: () {
+                      if (titleCtrl.text.trim().isEmpty) {
+                        ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('Please enter a subject')));
+                        return;
+                      }
+                      
+                      final updatedItem = ScheduleItem(
+                        id: editItem?.id ?? DateTime.now().millisecondsSinceEpoch.toString(),
+                        title: titleCtrl.text.trim(),
+                        location: locCtrl.text.trim(),
+                        weekday: selectedDay,
+                        startHour: startTime.hour,
+                        startMinute: startTime.minute,
+                        endHour: endTime.hour,
+                        endMinute: endTime.minute,
+                        type: type,
+                        attended: editItem?.attended,
+                      );
+
+                      if (editItem != null) {
+                        provider.editItem(editItem, updatedItem);
+                      } else {
+                        provider.addItem(updatedItem);
+                      }
+                      Navigator.pop(ctx2);
+                    },
+                    style: FilledButton.styleFrom(backgroundColor: config.primaryAccent),
+                    child: Text(editItem == null ? 'Save' : 'Update'),
                   ),
-                ]),
-                const SizedBox(height: 12),
-                Row(children: [
-                  Expanded(
-                    child: FilledButton(
-                      onPressed: () {
-                        if (titleCtrl.text.trim().isEmpty) {
-                          ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('Please enter a subject')));
-                          return;
-                        }
-                        provider.addItem(ScheduleItem(
-                          id: DateTime.now().millisecondsSinceEpoch.toString(),
-                          title: titleCtrl.text.trim(),
-                          location: locCtrl.text.trim(),
-                          weekday: selectedDay,
-                          startHour: startTime.hour,
-                          startMinute: startTime.minute,
-                          endHour: endTime.hour,
-                          endMinute: endTime.minute,
-                          type: type,
-                        ));
-                        Navigator.pop(ctx2);
-                      },
-                      style: FilledButton.styleFrom(backgroundColor: config.primaryAccent),
-                      child: Text('Save'),
-                    ),
-                  ),
-                ])
-              ]),
-            );
-          }),
-        );
-      }
-    );
-  }
+                ),
+              ])
+            ]),
+          );
+        }),
+      );
+    }
+  );
 }
 
 class _DayScheduleView extends StatefulWidget {
@@ -673,121 +738,124 @@ class _ClassTile extends StatelessWidget {
     final bool isExam = item.type == 'exam';
     final Color stripeColor = isExam ? Colors.orange : config.primaryAccent;
 
-    return Container(
-      margin: const EdgeInsets.only(bottom: 16),
-      decoration: BoxDecoration(
-        color: config.cardColor,
-        borderRadius: BorderRadius.circular(32),
-        border: Border.all(color: config.cardColor, width: 2),
-        boxShadow: [BoxShadow(color: Color.fromRGBO(220, 38, 38, 0.08), blurRadius: 30, spreadRadius: -10, offset: Offset(0, 15))],
-      ),
-      clipBehavior: Clip.antiAlias,
-      child: IntrinsicHeight(
-        child: Row(
-          children: [
-            // Colored Stripe
-            Container(
-              width: 8,
-              decoration: BoxDecoration(
-                color: stripeColor,
-              ),
-            ),
-            // Content
-            Expanded(
-              child: Padding(
-                padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 20),
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Row(
-                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                      children: [
-                        Expanded(
-                          child: Text(
-                            item.title, 
-                            style: GoogleFonts.plusJakartaSans(
-                              fontWeight: FontWeight.w900, 
-                              fontSize: 18,
-                              color: config.textMain
-                            )
-                          ),
-                        ),
-                        if (isExam) 
-                          Container(
-                            padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
-                            decoration: BoxDecoration(color: Colors.orange.shade50, borderRadius: BorderRadius.circular(8)),
-                            child: Text('EXAM', style: GoogleFonts.plusJakartaSans(fontSize: 9, fontWeight: FontWeight.w900, color: Colors.orange.shade800, letterSpacing: 1.5)),
-                          )
-                        else
-                          Container(
-                            padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
-                            decoration: BoxDecoration(color: config.softBg, borderRadius: BorderRadius.circular(8)),
-                            child: Text(item.type.toUpperCase(), style: GoogleFonts.plusJakartaSans(fontSize: 9, fontWeight: FontWeight.w900, color: config.primaryAccent, letterSpacing: 1.5)),
-                          )
-                      ],
-                    ),
-                    const SizedBox(height: 12),
-                    Row(
-                      children: [
-                        Icon(Icons.location_on, size: 14, color: config.textMuted.withValues(alpha: 0.6)),
-                        const SizedBox(width: 4),
-                        Flexible(
-                          child: Text(item.location, style: GoogleFonts.plusJakartaSans(color: config.textMuted, fontSize: 13, fontWeight: FontWeight.bold), maxLines: 1, overflow: TextOverflow.ellipsis),
-                        ),
-                        const SizedBox(width: 12),
-                        Icon(Icons.access_time_filled, size: 14, color: config.textMuted.withValues(alpha: 0.6)),
-                        const SizedBox(width: 4),
-                        Text("${_fmt(item.startHour, item.startMinute)} - ${_fmt(item.endHour, item.endMinute)}", style: GoogleFonts.plusJakartaSans(color: config.textMuted, fontSize: 13, fontWeight: FontWeight.bold)),
-                      ],
-                    ),
-                  ],
-                ),
-              ),
-            ),
-            // Attendance / Delete Buttons
-            // Only show Attendance check if the class has passed or started
-            if (_hasStarted(item))
+    return GestureDetector(
+      onTap: () => showAddEditClassSheet(context, provider, editItem: item),
+      child: Container(
+        margin: const EdgeInsets.only(bottom: 16),
+        decoration: BoxDecoration(
+          color: config.cardColor,
+          borderRadius: BorderRadius.circular(32),
+          border: Border.all(color: config.cardColor, width: 2),
+          boxShadow: [BoxShadow(color: Color.fromRGBO(220, 38, 38, 0.08), blurRadius: 30, spreadRadius: -10, offset: Offset(0, 15))],
+        ),
+        clipBehavior: Clip.antiAlias,
+        child: IntrinsicHeight(
+          child: Row(
+            children: [
+              // Colored Stripe
               Container(
-                decoration: BoxDecoration(border: Border(left: BorderSide(color: config.softBg))),
-                child: Column(
-                  mainAxisAlignment: MainAxisAlignment.center,
-                  children: [
-                    IconButton(
-                      icon: Icon(Icons.check_circle, size: 28, color: item.attended == true ? Colors.green : config.textMuted.withValues(alpha: 0.2)),
-                      onPressed: () => provider.toggleAttendance(item, true),
-                      tooltip: "Attended",
-                    ),
-                    IconButton(
-                      icon: Icon(Icons.cancel, size: 28, color: item.attended == false ? config.primaryAccent : config.textMuted.withValues(alpha: 0.2)),
-                      onPressed: () => provider.toggleAttendance(item, false),
-                      tooltip: "Missed",
-                    ),
-                  ],
+                width: 8,
+                decoration: BoxDecoration(
+                  color: stripeColor,
                 ),
-              )
-            else
-               Container(
-                 padding: const EdgeInsets.symmetric(horizontal: 16),
-                 child: IconButton(
-                   icon: Icon(Icons.delete_outline, size: 24, color: config.primaryAccent),
-                   onPressed: () async {
-                     final messenger = ScaffoldMessenger.of(context);
-                     final res = await showDialog<bool>(context: context, builder: (ctx) => AlertDialog(
-                       title: Text('Delete item'),
-                       content: Text('Remove this item from timetable?'),
-                       actions: [
-                         TextButton(onPressed: () => Navigator.pop(ctx, false), child: Text('Cancel')),
-                         FilledButton(onPressed: () => Navigator.pop(ctx, true), style: FilledButton.styleFrom(backgroundColor: config.primaryAccent), child: Text('Delete')),
-                       ],
-                     ));
-                     if (res == true) {
-                       provider.deleteItem(item);
-                       messenger.showSnackBar(const SnackBar(content: Text('Item deleted')));
-                     }
-                   },
+              ),
+              // Content
+              Expanded(
+                child: Padding(
+                  padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 20),
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Row(
+                        mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                        children: [
+                          Expanded(
+                            child: Text(
+                              item.title, 
+                              style: GoogleFonts.plusJakartaSans(
+                                fontWeight: FontWeight.w900, 
+                                fontSize: 18,
+                                color: config.textMain
+                              )
+                            ),
+                          ),
+                          if (isExam) 
+                            Container(
+                              padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                              decoration: BoxDecoration(color: Colors.orange.shade50, borderRadius: BorderRadius.circular(8)),
+                              child: Text('EXAM', style: GoogleFonts.plusJakartaSans(fontSize: 9, fontWeight: FontWeight.w900, color: Colors.orange.shade800, letterSpacing: 1.5)),
+                            )
+                          else
+                            Container(
+                              padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                              decoration: BoxDecoration(color: config.softBg, borderRadius: BorderRadius.circular(8)),
+                              child: Text(item.type.toUpperCase(), style: GoogleFonts.plusJakartaSans(fontSize: 9, fontWeight: FontWeight.w900, color: config.primaryAccent, letterSpacing: 1.5)),
+                            )
+                        ],
+                      ),
+                      const SizedBox(height: 12),
+                      Row(
+                        children: [
+                          Icon(Icons.location_on, size: 14, color: config.textMuted.withValues(alpha: 0.6)),
+                          const SizedBox(width: 4),
+                          Flexible(
+                            child: Text(item.location, style: GoogleFonts.plusJakartaSans(color: config.textMuted, fontSize: 13, fontWeight: FontWeight.bold), maxLines: 1, overflow: TextOverflow.ellipsis),
+                          ),
+                          const SizedBox(width: 12),
+                          Icon(Icons.access_time_filled, size: 14, color: config.textMuted.withValues(alpha: 0.6)),
+                          const SizedBox(width: 4),
+                          Text("${_fmt(item.startHour, item.startMinute)} - ${_fmt(item.endHour, item.endMinute)}", style: GoogleFonts.plusJakartaSans(color: config.textMuted, fontSize: 13, fontWeight: FontWeight.bold)),
+                        ],
+                      ),
+                    ],
+                  ),
+                ),
+              ),
+              // Attendance / Delete Buttons
+              // Only show Attendance check if the class has passed or started
+              if (_hasStarted(item))
+                Container(
+                  decoration: BoxDecoration(border: Border(left: BorderSide(color: config.softBg))),
+                  child: Column(
+                    mainAxisAlignment: MainAxisAlignment.center,
+                    children: [
+                      IconButton(
+                        icon: Icon(Icons.check_circle, size: 28, color: item.attended == true ? Colors.green : config.textMuted.withValues(alpha: 0.2)),
+                        onPressed: () => provider.toggleAttendance(item, true),
+                        tooltip: "Attended",
+                      ),
+                      IconButton(
+                        icon: Icon(Icons.cancel, size: 28, color: item.attended == false ? config.primaryAccent : config.textMuted.withValues(alpha: 0.2)),
+                        onPressed: () => provider.toggleAttendance(item, false),
+                        tooltip: "Missed",
+                      ),
+                    ],
+                  ),
+                )
+              else
+                 Container(
+                   padding: const EdgeInsets.symmetric(horizontal: 16),
+                   child: IconButton(
+                     icon: Icon(Icons.delete_outline, size: 24, color: config.primaryAccent),
+                     onPressed: () async {
+                       final messenger = ScaffoldMessenger.of(context);
+                       final res = await showDialog<bool>(context: context, builder: (ctx) => AlertDialog(
+                         title: Text('Delete item'),
+                         content: Text('Remove this item from timetable?'),
+                         actions: [
+                           TextButton(onPressed: () => Navigator.pop(ctx, false), child: Text('Cancel')),
+                           FilledButton(onPressed: () => Navigator.pop(ctx, true), style: FilledButton.styleFrom(backgroundColor: config.primaryAccent), child: Text('Delete')),
+                         ],
+                       ));
+                       if (res == true) {
+                         provider.deleteItem(item);
+                         messenger.showSnackBar(const SnackBar(content: Text('Item deleted')));
+                       }
+                     },
+                   ),
                  ),
-               ),
-          ],
+            ],
+          ),
         ),
       ),
     );

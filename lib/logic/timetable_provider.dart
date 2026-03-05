@@ -6,6 +6,7 @@ import '../data/models.dart';
 
 class TimetableProvider extends ChangeNotifier {
   late Box<ScheduleItem> _box;
+  late Box _settingsBox;
   List<ScheduleItem> _items = [];
   Timer? _timer;
 
@@ -18,6 +19,7 @@ class TimetableProvider extends ChangeNotifier {
   Future<void> _init() async {
     // Open Hive Box
     _box = await Hive.openBox<ScheduleItem>('timetable');
+    _settingsBox = await Hive.openBox('timetable_settings');
     _items = _box.values.toList();
     _isBoxOpen = true;
     _startTimer();
@@ -50,10 +52,63 @@ class TimetableProvider extends ChangeNotifier {
     notifyListeners();
   }
 
+  void editItem(ScheduleItem oldItem, ScheduleItem newItem) {
+    oldItem.title = newItem.title;
+    oldItem.location = newItem.location;
+    oldItem.weekday = newItem.weekday;
+    oldItem.startHour = newItem.startHour;
+    oldItem.startMinute = newItem.startMinute;
+    oldItem.endHour = newItem.endHour;
+    oldItem.endMinute = newItem.endMinute;
+    oldItem.type = newItem.type;
+    oldItem.save();
+    _items = _box.values.toList();
+    notifyListeners();
+  }
+
+  void clearTimetable() {
+    _box.clear();
+    _items = [];
+    notifyListeners();
+  }
+
   void toggleAttendance(ScheduleItem item, bool status) {
     item.attended = status;
     item.save(); // Update in Hive
     notifyListeners();
+  }
+
+  // --- WEEKLY RESET LOGIC ---
+  bool checkWeeklyResetNeeded() {
+    if (!_isBoxOpen) return false;
+    final now = DateTime.now();
+    final currentWeekStart = DateTime(now.year, now.month, now.day).subtract(Duration(days: now.weekday - 1));
+    
+    final lastOpenedWeekStr = _settingsBox.get('last_opened_week') as String?;
+    if (lastOpenedWeekStr != null) {
+      final lastOpenedWeek = DateTime.parse(lastOpenedWeekStr);
+      if (currentWeekStart.isAfter(lastOpenedWeek)) {
+        return true;
+      }
+    } else {
+      _settingsBox.put('last_opened_week', currentWeekStart.toIso8601String());
+    }
+    return false;
+  }
+
+  void confirmWeeklyReset(bool clear) {
+    if (clear) {
+      clearTimetable();
+    } else {
+      for (var item in _items) {
+        item.attended = null;
+        item.save();
+      }
+      notifyListeners();
+    }
+    final now = DateTime.now();
+    final currentWeekStart = DateTime(now.year, now.month, now.day).subtract(Duration(days: now.weekday - 1));
+    _settingsBox.put('last_opened_week', currentWeekStart.toIso8601String());
   }
 
   // --- LOGIC ---
