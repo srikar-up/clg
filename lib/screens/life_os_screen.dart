@@ -866,6 +866,64 @@ class _NotesView extends StatelessWidget {
   final LifeProvider provider;
   const _NotesView({required this.provider});
 
+  void _showNoteDetail(BuildContext context, dynamic n, ThemeProvider themeProv) {
+    final config = themeProv.config;
+    bool isTemp = n.noteType == 'temporary';
+    showDialog(
+      context: context,
+      builder: (ctx) => BackdropFilter(
+        filter: ImageFilter.blur(sigmaX: 5, sigmaY: 5),
+        child: Dialog(
+          backgroundColor: isTemp ? const Color(0xFFFFFACD) : config.cardColor,
+          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(40)),
+          insetPadding: const EdgeInsets.all(20),
+          child: Container(
+            padding: const EdgeInsets.all(32),
+            constraints: BoxConstraints(
+              maxHeight: MediaQuery.of(context).size.height * 0.7,
+            ),
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Row(
+                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                  children: [
+                    Icon(isTemp ? Icons.emergency : Icons.push_pin, size: 24, color: isTemp ? Colors.red.shade700 : config.primaryAccent),
+                    GestureDetector(
+                      onTap: () => Navigator.pop(ctx),
+                      child: Icon(Icons.close, size: 24, color: isTemp ? Colors.black54 : config.textMuted.withValues(alpha: 0.6)),
+                    ),
+                  ],
+                ),
+                const SizedBox(height: 24),
+                Flexible(
+                  child: SingleChildScrollView(
+                    physics: const BouncingScrollPhysics(),
+                    child: Text(
+                      n.content,
+                      style: GoogleFonts.plusJakartaSans(
+                        fontSize: 16,
+                        fontWeight: FontWeight.bold,
+                        color: isTemp ? Colors.black87 : config.textMain,
+                        height: 1.6,
+                      ),
+                    ),
+                  ),
+                ),
+                if(isTemp)
+                  Padding(
+                    padding: const EdgeInsets.only(top: 16),
+                    child: Text('EXP: ${n.expiresAt.toString().substring(0,10)}', style: GoogleFonts.plusJakartaSans(fontSize: 10, fontWeight: FontWeight.w900, color: Colors.black54, fontStyle: FontStyle.italic)),
+                  )
+              ],
+            ),
+          ),
+        ),
+      ),
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
     final themeProv = context.watch<ThemeProvider>();
@@ -882,6 +940,7 @@ class _NotesView extends StatelessWidget {
              final n = notes[idx];
              bool isTemp = n.noteType == 'temporary';
              return GestureDetector(
+               onTap: () => _showNoteDetail(context, n, themeProv),
                onLongPress: () => provider.deleteNote(n),
                child: Container(
                  padding: const EdgeInsets.all(20),

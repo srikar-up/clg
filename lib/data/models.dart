@@ -69,8 +69,20 @@ class Expense extends HiveObject {
   DateTime date;
   @HiveField(4)
   bool isDebt; // True if money owed
+  @HiveField(5)
+  double interestRate;
+  @HiveField(6)
+  bool isCompound;
 
-  Expense({required this.title, required this.amount, required this.category, required this.date, this.isDebt = false});
+  Expense({
+    required this.title, 
+    required this.amount, 
+    required this.category, 
+    required this.date, 
+    this.isDebt = false,
+    this.interestRate = 0.0,
+    this.isCompound = false,
+  });
 }
 
 // 4. QUEST MODEL
@@ -285,12 +297,27 @@ class ExpenseAdapter extends TypeAdapter<Expense> {
   final int typeId = 2;
   @override
   Expense read(BinaryReader reader) {
+    String title = reader.readString();
+    double amount = reader.readDouble();
+    String category = reader.readString();
+    DateTime date = DateTime.fromMillisecondsSinceEpoch(reader.readInt());
+    bool isDebt = reader.readBool();
+    double interestRate = 0.0;
+    bool isCompound = false;
+    try {
+      interestRate = reader.readDouble();
+      isCompound = reader.readBool();
+    } catch (e) {
+      // old format
+    }
     return Expense(
-      title: reader.readString(),
-      amount: reader.readDouble(),
-      category: reader.readString(),
-      date: DateTime.fromMillisecondsSinceEpoch(reader.readInt()),
-      isDebt: reader.readBool(),
+      title: title,
+      amount: amount,
+      category: category,
+      date: date,
+      isDebt: isDebt,
+      interestRate: interestRate,
+      isCompound: isCompound,
     );
   }
   @override
@@ -300,6 +327,8 @@ class ExpenseAdapter extends TypeAdapter<Expense> {
     writer.writeString(obj.category);
     writer.writeInt(obj.date.millisecondsSinceEpoch);
     writer.writeBool(obj.isDebt);
+    writer.writeDouble(obj.interestRate);
+    writer.writeBool(obj.isCompound);
   }
 }
 

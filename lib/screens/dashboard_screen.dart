@@ -9,6 +9,7 @@ import '../logic/expense_provider.dart';
 import '../logic/timetable_provider.dart';
 import '../logic/syllabus_provider.dart';
 import '../logic/theme_provider.dart';
+import '../logic/backup_service.dart';
 
 const _green = Color(0xFF10B981);
 const _purple = Color(0xFF8B5CF6);
@@ -556,9 +557,10 @@ class DashboardScreen extends StatelessWidget {
         color: config.cardColor,
         borderRadius: const BorderRadius.vertical(top: Radius.circular(32)),
       ),
-      child: Column(
-        mainAxisSize: MainAxisSize.min,
-        crossAxisAlignment: CrossAxisAlignment.start,
+      child: SingleChildScrollView(
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           Text('Settings', style: GoogleFonts.plusJakartaSans(fontSize: 20, fontWeight: FontWeight.bold, color: config.textMain)),
           const SizedBox(height: 16),
@@ -591,6 +593,23 @@ class DashboardScreen extends StatelessWidget {
           ),
           const Divider(),
           ListTile(
+            leading: Icon(Icons.download, color: config.primaryAccent),
+            title: Text('Export Backup (.okso)', style: TextStyle(color: config.textMain, fontWeight: FontWeight.bold)),
+            onTap: () async {
+              await BackupService.exportBackup(context);
+              if (context.mounted) Navigator.pop(context);
+            },
+          ),
+          ListTile(
+            leading: Icon(Icons.folder_shared, color: config.primaryAccent),
+            title: Text('Import Backup (.okso)', style: TextStyle(color: config.textMain, fontWeight: FontWeight.bold)),
+            onTap: () async {
+              await BackupService.importBackup(context);
+              if (context.mounted) Navigator.pop(context);
+            },
+          ),
+          const Divider(),
+          ListTile(
             leading: Icon(Icons.help_outline, color: config.primaryAccent),
             title: Text('Help & Support', style: TextStyle(color: config.textMain, fontWeight: FontWeight.bold)),
             onTap: () {
@@ -600,6 +619,7 @@ class DashboardScreen extends StatelessWidget {
           ),
           const SizedBox(height: 24),
         ],
+       ),
       ),
     );
   }

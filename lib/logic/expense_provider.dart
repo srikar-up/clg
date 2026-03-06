@@ -3,6 +3,7 @@ import 'package:flutter/services.dart';
 import 'package:hive_flutter/hive_flutter.dart';
 import 'package:intl/intl.dart';
 import 'dart:convert';
+import 'dart:math';
 import '../data/models.dart';
 
 class ExpenseProvider extends ChangeNotifier {
@@ -51,9 +52,34 @@ class ExpenseProvider extends ChangeNotifier {
 
   double get netCashFlow => (totalIncome + totalDebtTaken) - (totalExpense + totalInvestment + totalDebtRepaid);
 
+  double get totalDebtTakenAmount {
+    return _expenses.where((e) => e.title == 'Debt Taken').fold(0.0, (sum, e) => sum + e.amount);
+  }
+
+  double get accumulatedInterest {
+    double interest = 0.0;
+    final now = DateTime.now();
+    for (var e in _expenses.where((e) => e.title == 'Debt Taken')) {
+      if (e.interestRate > 0) {
+        final days = now.difference(e.date).inDays;
+        final years = days / 365.25;
+        if (years > 0) {
+          double totalForThisDebt = 0.0;
+          if (e.isCompound) {
+            totalForThisDebt = e.amount * pow((1 + e.interestRate / 100), years);
+          } else {
+            totalForThisDebt = e.amount * (1 + (e.interestRate / 100) * years);
+          }
+          interest += (totalForThisDebt - e.amount);
+        }
+      }
+    }
+    return interest;
+  }
+
   double get outstandingDebt {
-    final tTaken = _expenses.where((e) => e.title == 'Debt Taken').fold(0.0, (sum, e) => sum + e.amount);
-    final tRepaid = _expenses.where((e) => e.title == 'Debt Repayment').fold(0.0, (sum, e) => sum + e.amount);
+    double tTaken = totalDebtTakenAmount + accumulatedInterest;
+    double tRepaid = _expenses.where((e) => e.title == 'Debt Repayment').fold(0.0, (sum, e) => sum + e.amount);
     return tTaken - tRepaid;
   }
 
@@ -80,24 +106,26 @@ class ExpenseProvider extends ChangeNotifier {
     return "Stable finances. Keep it up!";
   }
 
-  void addTx(String type, String category, double amount, DateTime date) {
+  void addTx(String type, String category, double amount, DateTime date, {double interestRate = 0.0, bool isCompound = false}) {
     final expense = Expense(
       title: type, // Store type in title field mapping
       amount: amount,
       category: category,
       date: date,
       isDebt: (type == 'Debt Taken' || type == 'Debt Repayment'),
+      interestRate: interestRate,
+      isCompound: isCompound,
     );
     _box.add(expense);
-    _refresh();
+    loadData();
   }
 
   void deleteExpense(Expense expense) {
     expense.delete();
-    _refresh();
+    loadData();
   }
 
-  void _refresh() {
+  void loadData() {
     _expenses = _box.values.toList();
     _expenses.sort((a, b) => b.date.compareTo(a.date));
     notifyListeners();
@@ -106,9 +134,9 @@ class ExpenseProvider extends ChangeNotifier {
   // --- IMPORT / EXPORT ---
   String exportToCsv() {
     StringBuffer csv = StringBuffer();
-    csv.writeln("id,year,month,type,category,amount");
+    csv.writeln("id,year,month,type,category,amount,interestRate,isCompound");
     for (var e in _expenses) {
-      csv.writeln("${e.key},${e.date.year},${DateFormat('MMMM').format(e.date)},${e.title},${e.category},${e.amount}");
+      csv.writeln("${e.key},${e.date.year},${DateFormat('MMMM').format(e.date)},${e.title},${e.category},${e.amount},${e.interestRate},${e.isCompound}");
     }
     Clipboard.setData(ClipboardData(text: csv.toString()));
     return "CSV Copied to Clipboard!";
@@ -126,9 +154,11 @@ class ExpenseProvider extends ChangeNotifier {
           category: row['category'] ?? 'Other',
           date: _parseDate(row['year']?.toString() ?? '2024', row['month'] ?? 'January'),
           isDebt: (type == 'Debt Taken' || type == 'Debt Repayment'),
+          interestRate: (row['interestRate'] as num?)?.toDouble() ?? 0.0,
+          isCompound: row['isCompound'] as bool? ?? false,
         ));
       }
-      _refresh();
+      loadData();
     } catch (e) {
       debugPrint("Import error: $e");
     }

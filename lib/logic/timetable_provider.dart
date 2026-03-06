@@ -40,6 +40,11 @@ class TimetableProvider extends ChangeNotifier {
   List<ScheduleItem> get items => _items;
 
   // --- CRUD ---
+  void loadData() {
+    _items = _box.values.toList();
+    notifyListeners();
+  }
+
   void addItem(ScheduleItem item) {
     _box.add(item);
     _items = _box.values.toList();

@@ -131,7 +131,7 @@ class LifeProvider extends ChangeNotifier {
       xpPenalty: xpPenalty,
     );
     _questsBox.add(newQuest);
-    _refresh();
+    loadData();
   }
 
   void updateQuestProgress(Quest quest, int newProgress) {
@@ -141,12 +141,12 @@ class LifeProvider extends ChangeNotifier {
       quest.completedAt = DateTime.now();
     }
     quest.save();
-    _refresh();
+    loadData();
   }
 
   void deleteQuest(Quest quest) {
     quest.delete();
-    _refresh();
+    loadData();
   }
 
   // --- WORK COUNTER ACTIONS ---
@@ -158,26 +158,26 @@ class LifeProvider extends ChangeNotifier {
       iconData: iconData,
     );
     _countersBox.add(newCounter);
-    _refresh();
+    loadData();
   }
 
   void incrementCounter(WorkCounter counter) {
     counter.count++;
     counter.save();
-    _refresh();
+    loadData();
   }
 
   void decrementCounter(WorkCounter counter) {
     if (counter.count > 0) {
       counter.count--;
       counter.save();
-      _refresh();
+      loadData();
     }
   }
 
   void deleteCounter(WorkCounter counter) {
     counter.delete();
-    _refresh();
+    loadData();
   }
 
   // --- NOTE ACTIONS ---
@@ -189,12 +189,12 @@ class LifeProvider extends ChangeNotifier {
       expiresAt: expiresAt,
     );
     _notesBox.add(newNote);
-    _refresh();
+    loadData();
   }
 
   void deleteNote(Note note) {
     note.delete();
-    _refresh();
+    loadData();
   }
 
   // --- EVENT ACTIONS ---
@@ -207,12 +207,12 @@ class LifeProvider extends ChangeNotifier {
       isRecurring: isRecurring,
     );
     _eventsBox.add(newEvent);
-    _refresh();
+    loadData();
   }
 
   void deleteEvent(LifeEvent event) {
     event.delete();
-    _refresh();
+    loadData();
   }
 
   List<LifeEvent> get upcomingEvents => _events
@@ -228,7 +228,7 @@ class LifeProvider extends ChangeNotifier {
       isCompleted: false
     );
     _goalsBox.add(newGoal);
-    _refresh();
+    loadData();
   }
 
   void toggleGoal(LifeGoal goal, bool? value) {
@@ -240,10 +240,10 @@ class LifeProvider extends ChangeNotifier {
 
   void deleteGoal(LifeGoal goal) {
     goal.delete();
-    _refresh();
+    loadData();
   }
 
-  void _refresh() {
+  void loadData() {
     _goals = _goalsBox.values.toList();
     _quests = _questsBox.values.toList();
     _counters = _countersBox.values.toList();

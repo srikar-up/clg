@@ -802,10 +802,13 @@ class _SubjectDetailScreenState extends State<SubjectDetailScreen> {
                             padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 12),
                             color: config.softBg.withValues(alpha: 0.3),
                             child: Row(
-                              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                              crossAxisAlignment: CrossAxisAlignment.start,
                               children: [
                                 Text('UNIT ${unit.id}', style: GoogleFonts.plusJakartaSans(fontSize: 10, fontWeight: FontWeight.w900, color: config.primaryAccent.withValues(alpha: 0.4), letterSpacing: 1.5)),
-                                Text(unit.title, style: GoogleFonts.plusJakartaSans(fontSize: 12, fontWeight: FontWeight.w900, color: config.primaryAccent)),
+                                const SizedBox(width: 8),
+                                Expanded(
+                                  child: Text(unit.title, style: GoogleFonts.plusJakartaSans(fontSize: 12, fontWeight: FontWeight.w900, color: config.primaryAccent), textAlign: TextAlign.right),
+                                ),
                               ],
                             ),
                           ),
@@ -1073,12 +1076,14 @@ class _ExamCreatorModalState extends State<_ExamCreatorModal> {
                          title: Row(
                            mainAxisAlignment: MainAxisAlignment.spaceBetween,
                            children: [
-                             Column(
-                               crossAxisAlignment: CrossAxisAlignment.start,
-                               children: [
-                                 Text('UNIT ${u.id}', style: GoogleFonts.plusJakartaSans(fontSize: 10, fontWeight: FontWeight.w900, color: config.textMuted.withValues(alpha: 0.6))),
-                                 Text(u.title, style: GoogleFonts.plusJakartaSans(fontSize: 14, fontWeight: FontWeight.w900, color: config.textMain)),
-                               ],
+                             Expanded(
+                               child: Column(
+                                 crossAxisAlignment: CrossAxisAlignment.start,
+                                 children: [
+                                   Text('UNIT ${u.id}', style: GoogleFonts.plusJakartaSans(fontSize: 10, fontWeight: FontWeight.w900, color: config.textMuted.withValues(alpha: 0.6))),
+                                   Text(u.title, style: GoogleFonts.plusJakartaSans(fontSize: 14, fontWeight: FontWeight.w900, color: config.textMain)),
+                                 ],
+                               ),
                              ),
                              Checkbox(
                                value: u.topics.every((t) => _scope[u.title]?.contains(t.name) == true) && u.topics.isNotEmpty,
@@ -1178,9 +1183,9 @@ class _GradingModalState extends State<_GradingModal> {
                 Container(
                   width: 64,
                   decoration: BoxDecoration(color: config.cardColor, borderRadius: BorderRadius.circular(12), border: Border.all(color: config.primaryAccent.withValues(alpha: 0.3))),
-                  child: TextField(
+                  child: TextFormField(
                     textAlign: TextAlign.center,
-                    controller: TextEditingController(text: widget.subject.credits.toString())..selection = TextSelection.collapsed(offset: widget.subject.credits.toString().length),
+                    initialValue: widget.subject.credits.toString(),
                     onChanged: (v) { widget.subject.credits = int.tryParse(v) ?? 0; widget.subject.save(); },
                     keyboardType: TextInputType.number,
                     style: GoogleFonts.plusJakartaSans(fontWeight: FontWeight.bold, color: config.primaryAccent),
@@ -1208,8 +1213,8 @@ class _GradingModalState extends State<_GradingModal> {
                             mainAxisAlignment: MainAxisAlignment.spaceBetween,
                             children: [
                               Expanded(
-                                child: TextField(
-                                  controller: TextEditingController(text: wg.name)..selection = TextSelection.collapsed(offset: wg.name.length),
+                                child: TextFormField(
+                                  initialValue: wg.name,
                                   onChanged: (v) { wg.name = v; widget.subject.save(); },
                                   style: GoogleFonts.plusJakartaSans(fontSize: 14, fontWeight: FontWeight.w900, color: config.textMain),
                                   decoration: InputDecoration(border: InputBorder.none, isDense: true, contentPadding: EdgeInsets.zero),
@@ -1220,15 +1225,21 @@ class _GradingModalState extends State<_GradingModal> {
                                   Text('Weight:', style: GoogleFonts.plusJakartaSans(fontSize: 10, fontWeight: FontWeight.bold, color: config.textMuted.withValues(alpha: 0.6))),
                                   const SizedBox(width: 4),
                                   Container(
-                                    width: 48,
+                                    width: 76,
                                     decoration: BoxDecoration(color: config.cardColor, borderRadius: BorderRadius.circular(8), border: Border.all(color: config.primaryAccent.withValues(alpha: 0.2))),
-                                    child: TextField(
+                                    child: TextFormField(
                                       textAlign: TextAlign.center,
-                                      controller: TextEditingController(text: wg.percentage.toString())..selection = TextSelection.collapsed(offset: wg.percentage.toString().length),
-                                      onChanged: (v) { wg.percentage = double.tryParse(v) ?? 0; widget.subject.save(); setState((){}); },
+                                      initialValue: wg.percentage.toString().replaceAll(RegExp(r'\.0$'), ''),
+                                      onChanged: (v) { wg.percentage = double.tryParse(v) ?? 0; widget.subject.save(); },
                                       keyboardType: TextInputType.number,
                                       style: GoogleFonts.plusJakartaSans(fontSize: 12, fontWeight: FontWeight.bold, color: config.primaryAccent),
-                                      decoration: InputDecoration(border: InputBorder.none, isDense: true, contentPadding: EdgeInsets.all(4)),
+                                      decoration: InputDecoration(
+                                        border: InputBorder.none, 
+                                        isDense: true, 
+                                        contentPadding: EdgeInsets.symmetric(horizontal: 4, vertical: 6),
+                                        suffixText: '/100',
+                                        suffixStyle: GoogleFonts.plusJakartaSans(fontSize: 10, fontWeight: FontWeight.bold, color: config.textMuted.withValues(alpha: 0.5)),
+                                      ),
                                     ),
                                   )
                                 ],

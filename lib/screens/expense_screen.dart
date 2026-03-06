@@ -142,6 +142,62 @@ class _ExpenseScreenState extends State<ExpenseScreen> {
                     ),
                   ),
 
+                  // DEBT BREAKDOWN PANEL
+                  if (provider.totalDebtTakenAmount > 0)
+                    Padding(
+                      padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 10),
+                      child: Container(
+                        padding: const EdgeInsets.all(20),
+                        decoration: BoxDecoration(
+                          color: config.cardColor,
+                          borderRadius: BorderRadius.circular(32),
+                          boxShadow: [BoxShadow(color: Color.fromRGBO(0,0,0,0.03), blurRadius: 10, offset: Offset(0, 4))],
+                          border: Border.all(color: _orange.withValues(alpha: 0.3), width: 1.5)
+                        ),
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            Text('DEBT OUTLOOK', style: GoogleFonts.plusJakartaSans(fontSize: 10, fontWeight: FontWeight.w900, color: _orange, letterSpacing: 1.5)),
+                            const SizedBox(height: 16),
+                            Row(
+                              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                              children: [
+                                Expanded(
+                                  child: Column(
+                                    crossAxisAlignment: CrossAxisAlignment.start,
+                                    children: [
+                                      Text(_currencyFmt.format(provider.totalDebtTakenAmount), style: GoogleFonts.plusJakartaSans(fontSize: 16, fontWeight: FontWeight.w900, color: config.textMain)),
+                                      Text('Debt Taken', style: GoogleFonts.plusJakartaSans(fontSize: 9, fontWeight: FontWeight.bold, color: config.textMuted)),
+                                    ],
+                                  ),
+                                ),
+                                Text('+', style: GoogleFonts.plusJakartaSans(fontSize: 16, fontWeight: FontWeight.bold, color: config.textMuted)),
+                                Expanded(
+                                  child: Column(
+                                    crossAxisAlignment: CrossAxisAlignment.center,
+                                    children: [
+                                      Text(_currencyFmt.format(provider.accumulatedInterest), style: GoogleFonts.plusJakartaSans(fontSize: 16, fontWeight: FontWeight.w900, color: Colors.blue)),
+                                      Text('Interest Avg', style: GoogleFonts.plusJakartaSans(fontSize: 9, fontWeight: FontWeight.bold, color: config.textMuted)),
+                                    ],
+                                  ),
+                                ),
+                                Text('=', style: GoogleFonts.plusJakartaSans(fontSize: 16, fontWeight: FontWeight.bold, color: config.textMuted)),
+                                Expanded(
+                                  child: Column(
+                                    crossAxisAlignment: CrossAxisAlignment.end,
+                                    children: [
+                                      Text(_currencyFmt.format(provider.outstandingDebt), style: GoogleFonts.plusJakartaSans(fontSize: 16, fontWeight: FontWeight.w900, color: _orange)),
+                                      Text('Total Repayment', style: GoogleFonts.plusJakartaSans(fontSize: 9, fontWeight: FontWeight.bold, color: config.textMuted)),
+                                    ],
+                                  ),
+                                ),
+                              ],
+                            )
+                          ],
+                        ),
+                      ),
+                    ),
+
                   // SECONDARY KPIS
                   Padding(
                     padding: const EdgeInsets.symmetric(horizontal: 20),
@@ -316,15 +372,19 @@ class _AddTransactionModal extends StatefulWidget {
 
 class _AddTransactionModalState extends State<_AddTransactionModal> {
   final _amountCtrl = TextEditingController();
+  final _customCategoryCtrl = TextEditingController();
+  final _interestCtrl = TextEditingController(text: '0');
+  
   String _type = 'Expense';
   String _category = 'Food';
   DateTime _date = DateTime.now();
+  bool _isCompound = false;
 
   List<String> get _categories {
-     if (_type == 'Expense') return ['Rent/EMI', 'Food', 'Groceries', 'Travel', 'Shopping', 'Bills'];
-     if (_type == 'Debt Taken' || _type == 'Debt Repayment') return ['Personal Loan', 'Credit Card', 'Borrowed from Friend'];
-     if (_type == 'Investment') return ['Stocks', 'SIP', 'Crypto', 'FD'];
-     return ['Salary', 'Bonus', 'Freelance'];
+     if (_type == 'Expense') return ['Rent/EMI', 'Food', 'Groceries', 'Travel', 'Shopping', 'Bills', 'Custom'];
+     if (_type == 'Debt Taken' || _type == 'Debt Repayment') return ['Personal Loan', 'Credit Card', 'Borrowed from Friend', 'Custom'];
+     if (_type == 'Investment') return ['Stocks', 'SIP', 'Crypto', 'FD', 'Custom'];
+     return ['Salary', 'Bonus', 'Freelance', 'Custom'];
   }
 
   @override
@@ -377,6 +437,9 @@ class _AddTransactionModalState extends State<_AddTransactionModal> {
                            setState(() {
                              _type = v!;
                              _category = _categories.first;
+                             _customCategoryCtrl.clear();
+                             _interestCtrl.text = '0';
+                             _isCompound = false;
                            });
                          },
                       ))
@@ -394,6 +457,53 @@ class _AddTransactionModalState extends State<_AddTransactionModal> {
                     ),
                   ]
                 ),
+
+                if (_category == 'Custom') ...[
+                  const SizedBox(height: 16),
+                  _buildInputCard('CUSTOM CATEGORY', TextField(
+                    controller: _customCategoryCtrl,
+                    style: GoogleFonts.plusJakartaSans(fontSize: 14, fontWeight: FontWeight.bold, color: config.textMain),
+                    decoration: InputDecoration(
+                       border: InputBorder.none,
+                       hintText: 'Enter category name...',
+                       hintStyle: GoogleFonts.plusJakartaSans(color: config.textMuted.withValues(alpha: 0.6)),
+                    ),
+                  )),
+                ],
+
+                if (_type == 'Debt Taken') ...[
+                  const SizedBox(height: 16),
+                  Row(
+                    children: [
+                      Expanded(
+                        child: _buildInputCard('INTEREST TYPE', DropdownButton<bool>(
+                          value: _isCompound,
+                          isExpanded: true,
+                          underline: const SizedBox(),
+                          icon: Icon(Icons.keyboard_arrow_down, size: 16),
+                          items: [
+                             DropdownMenuItem(value: false, child: Text('Simple', style: GoogleFonts.plusJakartaSans(fontSize: 12, fontWeight: FontWeight.bold))),
+                             DropdownMenuItem(value: true, child: Text('Compound', style: GoogleFonts.plusJakartaSans(fontSize: 12, fontWeight: FontWeight.bold))),
+                          ],
+                          onChanged: (v) => setState(() => _isCompound = v ?? false),
+                        ))
+                      ),
+                      const SizedBox(width: 16),
+                      Expanded(
+                        child: _buildInputCard('INTEREST RATE (%)', TextField(
+                          controller: _interestCtrl,
+                          keyboardType: const TextInputType.numberWithOptions(decimal: true),
+                          style: GoogleFonts.plusJakartaSans(fontSize: 14, fontWeight: FontWeight.bold, color: config.textMain),
+                          decoration: InputDecoration(
+                            border: InputBorder.none,
+                            hintText: '0',
+                            hintStyle: GoogleFonts.plusJakartaSans(color: config.textMuted.withValues(alpha: 0.6)),
+                          ),
+                        ))
+                      )
+                    ]
+                  ),
+                ],
 
                 const SizedBox(height: 16),
 
@@ -435,7 +545,18 @@ class _AddTransactionModalState extends State<_AddTransactionModal> {
                   onTap: () {
                     final amt = double.tryParse(_amountCtrl.text) ?? 0;
                     if (amt > 0) {
-                      widget.provider.addTx(_type, _category, amt, _date);
+                      String finalCat = _category == 'Custom' 
+                          ? (_customCategoryCtrl.text.trim().isEmpty ? 'Other' : _customCategoryCtrl.text.trim()) 
+                          : _category;
+                      double interest = 0.0;
+                      if (_type == 'Debt Taken') {
+                        interest = double.tryParse(_interestCtrl.text) ?? 0.0;
+                      }
+                      widget.provider.addTx(
+                         _type, finalCat, amt, _date,
+                         interestRate: interest,
+                         isCompound: _isCompound
+                      );
                       Navigator.pop(context);
                     }
                   },

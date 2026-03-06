@@ -127,6 +127,7 @@ class _TimetableScreenState extends State<TimetableScreen> with SingleTickerProv
                   boxShadow: [BoxShadow(color: config.primaryAccent.withValues(alpha: 0.3), blurRadius: 8, offset: const Offset(0, 4))],
                 ),
                 indicatorSize: TabBarIndicatorSize.tab,
+                splashBorderRadius: BorderRadius.circular(20),
                 labelColor: config.cardColor,
                 unselectedLabelColor: config.textMuted,
                 labelStyle: GoogleFonts.plusJakartaSans(fontSize: 12, fontWeight: FontWeight.w900, letterSpacing: 0.5),

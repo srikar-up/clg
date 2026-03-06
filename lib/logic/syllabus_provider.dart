@@ -20,14 +20,21 @@ class SyllabusProvider extends ChangeNotifier {
   Future<void> _init() async {
     _box = await Hive.openBox<SyllabusSubject>('syllabus_subjects_v1');
     _semBox = await Hive.openBox<String>('syllabus_semesters_v1');
+    
+    final savedActive = _semBox.get('active_semester_id');
+    if (savedActive != null) {
+      _activeSemester = int.tryParse(savedActive) ?? 1;
+    }
+    
     _isInit = true;
-    _refresh();
+    loadData();
   }
 
   List<SyllabusSubject> get subjects => _items.where((s) => s.semester == _activeSemester).toList();
 
   void setActiveSemester(int sem) {
     _activeSemester = sem;
+    _semBox.put('active_semester_id', sem.toString());
     notifyListeners();
   }
 
@@ -67,6 +74,7 @@ class SyllabusProvider extends ChangeNotifier {
     int nextId = maxId + 1;
     _semBox.put(nextId, name);
     _activeSemester = nextId;
+    _semBox.put('active_semester_id', nextId.toString());
     notifyListeners();
   }
 
@@ -75,7 +83,7 @@ class SyllabusProvider extends ChangeNotifier {
     notifyListeners();
   }
 
-  void _refresh() {
+  void loadData() {
     _items = _box.values.toList();
     notifyListeners();
   }
@@ -83,12 +91,12 @@ class SyllabusProvider extends ChangeNotifier {
   void addSubject({required String name, required String code, required int credits, required int semester}) {
     final sub = SyllabusSubject(code: code, name: name, credits: credits, semester: semester);
     _box.add(sub);
-    _refresh();
+    loadData();
   }
 
   void deleteSubject(SyllabusSubject sub) {
     sub.delete();
-    _refresh();
+    loadData();
   }
 
   void toggleTopic(SyllabusSubject subject, SyllabusTopic topic) {
@@ -244,7 +252,7 @@ class SyllabusProvider extends ChangeNotifier {
         _box.add(sub);
         count++;
       }
-      _refresh();
+      loadData();
       return "Imported $count subjects!";
     } catch (e) {
       return "Error parsing JSON: $e";
