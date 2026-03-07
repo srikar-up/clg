@@ -1,9 +1,9 @@
-name: Release Argon (v1.1-beta)
+name: Release Neon (v1.2-beta)
 
 on:
   push:
     tags:
-      - 'v*' # Trigger workflow on pushes that match v*, like v1.1-beta
+      - 'v*' # Trigger workflow on pushes that match v*, like v1.2-beta
 
 permissions:
   contents: write
@@ -36,24 +36,25 @@ jobs:
       - name: Create GitHub Release
         uses: softprops/action-gh-release@v2
         with:
-          name: Argon - v1.1 Beta 🚀
+          name: Neon - v1.2 Beta 🚀
           draft: false
           prerelease: true
           body: |
-            ## Argon (v1.1 Beta) 🎉
-            **Welcome to the first official beta release of Student LifeOS!**
+            ## Neon (v1.2 Beta) 🎉
+            **Welcome to the Neon Beta release of Student LifeOS!**
             
-            This release focuses on heavily expanding the core aesthetics and logic of the Timetable section while fixing major layout bugs across multiple screens.
+            This release introduces a robust notification system and advanced task scheduling, ensuring you never miss an event or fall behind on your syllabus.
             
             ### ✨ Features Included:
-            - **Timetable Redesign**: Stunning new "Red Accent" aesthetics with pill tabs, smooth shadows, and a customized floating header.
-            - **Intelligent Timetable Logic**: Daily completion progress tracking and automated "Time until next class" live calculations.
-            - **Syllabus Enhancements**: Fixed pixel overflow bugs when checking exam results, added tap-to-edit logic on existing marks.
-            - **Safety Warnings**: Added warning confirmation dialogs before deleting Syllabus items or Subjects to prevent data loss.
-            - **Dashboard Interactivity**: The "Upcoming Classes" quick-action widget now correctly routes directly to the active Timetable tab.
-            - **Performance Fixes**: Solved multiple `RenderFlex` overflow errors on smaller devices and mobile screens.
+            - **Intelligent Notification Engine**: Completely re-written to run natively in local background using latest `flutter_local_notifications` API.
+            - **Quest & Event Reminders**: Event reminders pop up 5 days, 3 days, 1 day, and on the day of the event. Quests will seamlessly remind you to complete them daily.
+            - **Syllabus Progress Interventions**: Automated daily spam reminders triggers if an exam is within 3 days and your syllabus is incomplete!
+            - **Precise Event Time Selection**: The 'Save Event' UI now supports a dual date & time picker, saving exact hour/minutes to power exact minute-level notifications.
+            - **Linux Desktop Support**: Bundled new custom icons with `AssetsLinuxIcon` for comprehensive Linux environment support.
+            - **Plugin upgrades**: Upgraded core notification plugins to v21 and finalized named-parameter refactors.
+            - **Bug Fixes & Stabilizations**: Resolved overlapping text issues, null pointer exceptions when handling empty exam values, and fixed the Linux VM `UnimplementedError` build crash.
                         
             ### 📦 Download
-            Install the attached `app-release.apk` directly onto your Android device to experience the Argon release!
+            Install the attached `app-release.apk` directly onto your Android device to experience the Neon release!
           files: build/app/outputs/flutter-apk/app-release.apk
           token: ${{ secrets.GITHUB_TOKEN }}
