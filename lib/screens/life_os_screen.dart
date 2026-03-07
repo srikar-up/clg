@@ -501,7 +501,8 @@ class _LifeOsScreenState extends State<LifeOsScreen> with SingleTickerProviderSt
   void _showAddEventDialog(BuildContext context, LifeProvider provider) {
     final config = Provider.of<ThemeProvider>(context, listen: false).config;
     final titleCtrl = TextEditingController();
-    DateTime date = DateTime.now();
+    final now = DateTime.now();
+    DateTime date = DateTime(now.year, now.month, now.day);
     showDialog(
       context: context,
       builder: (ctx) => BackdropFilter(
@@ -526,15 +527,30 @@ class _LifeOsScreenState extends State<LifeOsScreen> with SingleTickerProviderSt
                   ),
                 ),
                 const SizedBox(height: 16),
-                GestureDetector(
+                  GestureDetector(
                   onTap: () async {
-                    final picked = await showDatePicker(context: ctx, initialDate: date, firstDate: DateTime.now(), lastDate: DateTime(2050));
-                    if(picked != null) setState(()=> date = picked);
+                    final pickedDate = await showDatePicker(
+                        context: ctx, initialDate: date, firstDate: DateTime.now(), lastDate: DateTime(2050));
+                    if (pickedDate != null) {
+                      if (!ctx.mounted) return;
+                      final pickedTime = await showTimePicker(
+                          context: ctx, initialTime: TimeOfDay.fromDateTime(date));
+                      if (pickedTime != null) {
+                        setState(() {
+                          date = DateTime(pickedDate.year, pickedDate.month, pickedDate.day,
+                              pickedTime.hour, pickedTime.minute);
+                        });
+                      } else {
+                        setState(() {
+                          date = DateTime(pickedDate.year, pickedDate.month, pickedDate.day, date.hour, date.minute);
+                        });
+                      }
+                    }
                   },
                   child: Container(
                     padding: const EdgeInsets.all(16),
                     decoration: BoxDecoration(border: Border.all(color: config.primaryAccent.withValues(alpha: 0.2)), borderRadius: BorderRadius.circular(24)),
-                    child: Text(date.toString().substring(0, 10), style: GoogleFonts.plusJakartaSans(fontWeight: FontWeight.bold, color: config.primaryAccent)),
+                    child: Text(date.toString().substring(0, 16), style: GoogleFonts.plusJakartaSans(fontWeight: FontWeight.bold, color: config.primaryAccent)),
                   ),
                 ),
                 const SizedBox(height: 24),
@@ -1028,7 +1044,10 @@ class _EventsView extends StatelessWidget {
                          children: [
                            Text(e.name, style: GoogleFonts.plusJakartaSans(fontSize: 14, fontWeight: FontWeight.w900, color: config.textMain)),
                            const SizedBox(height: 2),
-                           Text(e.eventType.toUpperCase(), style: GoogleFonts.plusJakartaSans(fontSize: 10, fontWeight: FontWeight.bold, color: config.textMuted.withValues(alpha: 0.6))),
+                           Builder(builder: (ctx) {
+                             String timeStr = (e.date.hour != 0 || e.date.minute != 0) ? " @ ${e.date.hour.toString().padLeft(2, '0')}:${e.date.minute.toString().padLeft(2, '0')}" : "";
+                             return Text(e.eventType.toUpperCase() + timeStr, style: GoogleFonts.plusJakartaSans(fontSize: 10, fontWeight: FontWeight.bold, color: config.textMuted.withValues(alpha: 0.6)));
+                           }),
                          ],
                        ),
                      ),
@@ -1171,7 +1190,10 @@ class _UpcomingEvents extends StatelessWidget {
                  Expanded(
                    child: Text(e.name, style: GoogleFonts.plusJakartaSans(fontSize: 14, fontWeight: FontWeight.w900, color: config.textMain)),
                  ),
-                 Text(e.daysUntil == 0 ? "TODAY" : "IN ${e.daysUntil} DAYS", style: GoogleFonts.plusJakartaSans(fontSize: 10, fontWeight: FontWeight.bold, color: config.primaryAccent))
+                 Builder(builder: (ctx) {
+                   String timeStr = (e.date.hour != 0 || e.date.minute != 0) ? " \n@ ${e.date.hour.toString().padLeft(2, '0')}:${e.date.minute.toString().padLeft(2, '0')}" : "";
+                   return Text((e.daysUntil == 0 ? "TODAY" : "IN ${e.daysUntil} DAYS") + timeStr, textAlign: TextAlign.right, style: GoogleFonts.plusJakartaSans(fontSize: 10, fontWeight: FontWeight.bold, color: config.primaryAccent));
+                 })
                ]
              )
            );

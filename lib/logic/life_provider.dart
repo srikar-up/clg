@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:hive_flutter/hive_flutter.dart';
 import '../data/models.dart';
-
+import 'notification_service.dart';
 class LifeProvider extends ChangeNotifier {
   late Box<LifeGoal> _goalsBox;
   late Box<Quest> _questsBox;
@@ -36,6 +36,7 @@ class LifeProvider extends ChangeNotifier {
     _events = _eventsBox.values.toList();
     
     _calculateScore();
+    NotificationService().syncNotifications(_quests, _events);
     notifyListeners();
   }
 
@@ -250,6 +251,7 @@ class LifeProvider extends ChangeNotifier {
     _notes = _notesBox.values.toList();
     _events = _eventsBox.values.toList();
     _calculateScore();
+    NotificationService().syncNotifications(_quests, _events);
     notifyListeners();
   }
 }

@@ -9,6 +9,7 @@ import 'logic/life_provider.dart';
 import 'logic/expense_provider.dart'; // New
 import 'logic/syllabus_provider.dart'; // New
 import 'logic/theme_provider.dart'; // New
+import 'logic/notification_service.dart'; // New
 
 import 'screens/timetable_screen.dart';
 import 'screens/life_os_screen.dart';
@@ -19,6 +20,9 @@ import 'screens/dashboard_screen.dart';
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
   await Hive.initFlutter();
+  
+  // Initialize Notification Service
+  await NotificationService().init();
   
   // Register Adapters
   Hive.registerAdapter(ScheduleItemAdapter());

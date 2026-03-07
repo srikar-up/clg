@@ -3,6 +3,7 @@ import 'package:flutter/services.dart';
 import 'package:hive_flutter/hive_flutter.dart';
 import 'dart:convert';
 import '../data/syllabus_model.dart';
+import 'notification_service.dart';
 
 class SyllabusProvider extends ChangeNotifier {
   late Box<SyllabusSubject> _box;
@@ -13,6 +14,14 @@ class SyllabusProvider extends ChangeNotifier {
 
   SyllabusProvider() {
     _init();
+  }
+
+  @override
+  void notifyListeners() {
+    super.notifyListeners();
+    if (_isInit) {
+      NotificationService().syncSyllabusNotifications(_items);
+    }
   }
 
   int get activeSemester => _activeSemester;
