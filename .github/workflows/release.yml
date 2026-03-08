@@ -1,4 +1,4 @@
-name: Release Neon (v1.2-beta)
+name: Release Neon
 
 on:
   push:
@@ -36,12 +36,12 @@ jobs:
       - name: Create GitHub Release
         uses: softprops/action-gh-release@v2
         with:
-          name: Neon - v1.2 Beta 🚀
+          name: Neon - ${{ github.ref_name }} 🚀
           draft: false
           prerelease: true
           body: |
-            ## Neon (v1.2 Beta) 🎉
-            **Welcome to the Neon Beta release of Student LifeOS!**
+            ## Neon (${{ github.ref_name }}) 🎉
+            **Welcome to the Neon Beta release of OKSO!**
             
             This release introduces a robust notification system and advanced task scheduling, ensuring you never miss an event or fall behind on your syllabus.
             
